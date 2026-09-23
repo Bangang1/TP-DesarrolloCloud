@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: contratos_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: contratos_db
+    volumes:
+      - mongodb_data:/data/db
+
+  backend-info:
+    build: ./backend-info
+    container_name: contratos_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      MONGODB_URL: mongodb://admin:password@mongodb:27017/contratos_db?authSource=admin
+      MONGODB_DB_NAME: contratos_db
+    env_file:
+      - ./backend-info/.env
+    depends_on:
+      - mongodb
+    volumes:
+      - ./backend-info:/app
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: contratos_n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: password
+      WEBHOOK_URL: http://localhost:5678
+      GENERIC_TIMEZONE: America/Argentina/Buenos_Aires
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n-workflows:/workflows
+
+volumes:
+  mongodb_data:
+  n8n_data:

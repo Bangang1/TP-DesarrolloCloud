@@ -1,0 +1,156 @@
+{
+  "name": "Contract Analysis Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "contract-analysis",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Recibir Contrato",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "contract-analysis"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.secret }}",
+              "value2": "{{ $env.N8N_WEBHOOK_SECRET }}"
+            }
+          ]
+        }
+      },
+      "id": "validate-secret",
+      "name": "Validar Secret",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://s3.amazonaws.com/{{ $env.AWS_BUCKET_NAME }}/{{ $json.s3_key }}",
+        "responseFormat": "file",
+        "options": {}
+      },
+      "id": "download-from-s3",
+      "name": "Descargar PDF de S3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "model": "gpt-4o",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Eres un experto en analisis de contratos legales. Analiza el siguiente contrato y extrae la informacion en formato JSON con esta estructura exacta:\n\n{\n  \"summary\": \"Resumen ejecutivo del contrato en 2-3 parrafos\",\n  \"parties\": [\"Nombre Parte 1\", \"Nombre Parte 2\"],\n  \"key_dates\": [\n    {\"type\": \"inicio\", \"date\": \"YYYY-MM-DD\", \"description\": \"...\"}\n  ],\n  \"risks\": [\n    {\"clause\": \"Clausula X\", \"description\": \"Descripcion del riesgo\", \"severity\": \"low|medium|high\"}\n  ],\n  \"clauses\": [\n    {\"title\": \"Titulo clausula\", \"content\": \"Contenido relevante\"}\n  ]\n}\n\nResponde SOLO con el JSON, sin texto adicional."
+            },
+            {
+              "role": "user",
+              "content": "=Analiza este contrato:\n\n{{ $json.text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "analyze-with-gpt",
+      "name": "Analizar con GPT-4o",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://backend-info:8000/webhooks/n8n/analysis-complete",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "secret", "value": "={{ $env.N8N_WEBHOOK_SECRET }}" },
+            { "name": "contract_id", "value": "={{ $('Webhook - Recibir Contrato').item.json.contract_id }}" },
+            { "name": "user_id", "value": "={{ $('Webhook - Recibir Contrato').item.json.user_id }}" },
+            { "name": "status", "value": "completed" },
+            { "name": "summary", "value": "={{ JSON.parse($json.message.content).summary }}" },
+            { "name": "parties", "value": "={{ JSON.parse($json.message.content).parties }}" },
+            { "name": "key_dates", "value": "={{ JSON.parse($json.message.content).key_dates }}" },
+            { "name": "risks", "value": "={{ JSON.parse($json.message.content).risks }}" },
+            { "name": "clauses", "value": "={{ JSON.parse($json.message.content).clauses }}" },
+            { "name": "raw_text", "value": "={{ $('Descargar PDF de S3').item.json.text }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "notify-backend",
+      "name": "Notificar Backend - Exito",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://backend-info:8000/webhooks/n8n/analysis-complete",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "secret", "value": "={{ $env.N8N_WEBHOOK_SECRET }}" },
+            { "name": "contract_id", "value": "={{ $('Webhook - Recibir Contrato').item.json.contract_id }}" },
+            { "name": "status", "value": "error" },
+            { "name": "error_message", "value": "Secret invalido" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "notify-backend-error",
+      "name": "Notificar Backend - Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"received\": true }"
+      },
+      "id": "respond-webhook",
+      "name": "Responder Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [460, 500]
+    }
+  ],
+  "connections": {
+    "Webhook - Recibir Contrato": {
+      "main": [
+        [
+          { "node": "Validar Secret", "type": "main", "index": 0 },
+          { "node": "Responder Webhook", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Validar Secret": {
+      "main": [
+        [{ "node": "Descargar PDF de S3", "type": "main", "index": 0 }],
+        [{ "node": "Notificar Backend - Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Descargar PDF de S3": {
+      "main": [[{ "node": "Analizar con GPT-4o", "type": "main", "index": 0 }]]
+    },
+    "Analizar con GPT-4o": {
+      "main": [[{ "node": "Notificar Backend - Exito", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
