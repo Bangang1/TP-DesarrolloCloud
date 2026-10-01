@@ -1,15 +1,17 @@
 /**
  * Cliente HTTP para comunicarse con el backend FastAPI.
- * Incluye automaticamente el token de Clerk en cada request.
+ * Incluye automáticamente el token de Supabase en cada request.
  */
+import { createClient } from "@/lib/supabase/client";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 async function getAuthHeaders(): Promise<HeadersInit> {
-  // En el cliente, obtenemos el token de Clerk
+  // En el cliente, obtenemos el token de Supabase
   if (typeof window !== "undefined") {
-    const { Clerk } = window as typeof window & { Clerk?: { session?: { getToken: () => Promise<string | null> } } };
-    const token = await Clerk?.session?.getToken();
+    const supabase = createClient();
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
     if (token) {
       return {
         Authorization: `Bearer ${token}`,
@@ -23,8 +25,9 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 // ─── Contratos ───────────────────────────────────────────────────────────────
 
 export async function uploadContract(file: File) {
-  const { Clerk } = window as typeof window & { Clerk?: { session?: { getToken: () => Promise<string | null> } } };
-  const token = await Clerk?.session?.getToken();
+  const supabase = createClient();
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
 
   const formData = new FormData();
   formData.append("file", file);

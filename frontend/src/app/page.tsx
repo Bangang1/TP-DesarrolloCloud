@@ -1127,13 +1127,13 @@ export default function LandingPage() {
               <div className="text-2xl sm:text-3xl mb-2.5">⚡</div>
               <h3 className="text-base font-bold text-white mb-1.5">Frontend Next.js 16</h3>
               <p className="text-xs text-gray-400 leading-relaxed mb-4">
-                Renderizado híbrido con App Router. Integración de autenticación de usuarios con Clerk y consumo de endpoints protegidos por JWT.
+                Renderizado híbrido con App Router. Integración de autenticación de usuarios con Supabase Auth y consumo de endpoints protegidos por JWT.
               </p>
             </div>
             <div className="flex gap-1.5 flex-wrap pt-3 border-t border-white/5">
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-gray-300">Next.js 16</span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-gray-300">TailwindCSS</span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-gray-300">Clerk Auth</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-gray-300">Supabase Auth</span>
             </div>
           </div>
 
@@ -1291,7 +1291,7 @@ export default function LandingPage() {
             },
             {
               q: "¿Cómo se garantiza la seguridad y privacidad de los documentos?",
-              a: "Cada contrato se almacena en un bucket de Amazon S3 con cifrado del lado del servidor (SSE-S3). Los identificadores son anónimos, la autenticación está administrada por Clerk y los microservicios solo acceden a los documentos mediante tokens seguros de corta duración.",
+              a: "Cada contrato se almacena en un bucket de Amazon S3 con cifrado del lado del servidor (SSE-S3). Los identificadores son anónimos, la autenticación está administrada por Supabase Auth y los microservicios solo acceden a los documentos mediante tokens seguros de corta duración.",
             },
             {
               q: "¿El Chat Jurídico inventa respuestas (alucinaciones)?",

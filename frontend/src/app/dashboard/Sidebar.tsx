@@ -3,9 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useClerk, useUser } from "@clerk/nextjs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 import SignOutModal from "./SignOutModal";
+import type { User } from "@supabase/supabase-js";
 
 const navItems = [
   { href: "/dashboard",           label: "Inicio",         icon: "⊞" },
@@ -17,12 +18,20 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { user } = useUser();
   const [showSignOut, setShowSignOut] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
-  const displayName = user?.firstName
-    ? `${user.firstName} ${user.lastName ?? ""}`.trim()
-    : user?.emailAddresses?.[0]?.emailAddress ?? "Usuario";
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+    });
+  }, []);
+
+  const displayName = user?.user_metadata?.full_name
+    || user?.user_metadata?.name
+    || user?.email?.split("@")[0]
+    || "Usuario";
 
   const isActive = (href: string) =>
     href === "/dashboard" ? pathname === href : pathname.startsWith(href);
@@ -61,7 +70,7 @@ export default function Sidebar() {
           <div className="user-info">
             <span className="user-avatar" />
             <div>
-              <div className="user-name">{displayName.split(" ")[0]} {displayName.split(" ")[1]?.[0]}.</div>
+              <div className="user-name">{displayName.split(" ")[0]} {displayName.split(" ")[1]?.[0] ? `${displayName.split(" ")[1][0]}.` : ""}</div>
               <div className="user-role">Alumno / Dev</div>
             </div>
           </div>
