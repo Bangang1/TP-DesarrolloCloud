@@ -24,41 +24,43 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 
 // ─── Contratos ───────────────────────────────────────────────────────────────
 
-export async function uploadContract(file: File) {
-  const supabase = createClient();
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
+/**
+ * Registra un contrato (ya subido a Firebase Storage) en el backend
+ * y dispara el análisis de IA en segundo plano.
+ */
+export async function registrarContrato(usuarioId: string, contratoUrl: string) {
+  const headers = await getAuthHeaders();
 
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const res = await fetch(`${API_URL}/contracts/`, {
+  const res = await fetch(`${API_URL}/api/contratos/analizar`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
+    headers,
+    body: JSON.stringify({
+      usuario_id: usuarioId,
+      contrato_url: contratoUrl,
+    }),
   });
 
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
-export async function getContracts() {
+export async function getContratos() {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_URL}/contracts/`, { headers });
+  const res = await fetch(`${API_URL}/api/contratos/`, { headers });
   if (!res.ok) throw new Error("Error al obtener contratos");
   return res.json();
 }
 
-export async function getContract(id: string) {
+export async function getContrato(id: string) {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_URL}/contracts/${id}`, { headers });
+  const res = await fetch(`${API_URL}/api/contratos/${id}`, { headers });
   if (!res.ok) throw new Error("Contrato no encontrado");
   return res.json();
 }
 
-export async function deleteContract(id: string) {
+export async function deleteContrato(id: string) {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_URL}/contracts/${id}`, {
+  const res = await fetch(`${API_URL}/api/contratos/${id}`, {
     method: "DELETE",
     headers,
   });
@@ -67,9 +69,9 @@ export async function deleteContract(id: string) {
 
 // ─── Chat ─────────────────────────────────────────────────────────────────────
 
-export async function sendChatMessage(contractId: string, question: string) {
+export async function sendChatMessage(contratoId: string, question: string) {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_URL}/chat/${contractId}`, {
+  const res = await fetch(`${API_URL}/chat/${contratoId}`, {
     method: "POST",
     headers,
     body: JSON.stringify({ question }),
@@ -78,9 +80,9 @@ export async function sendChatMessage(contractId: string, question: string) {
   return res.json();
 }
 
-export async function getChatHistory(contractId: string) {
+export async function getChatHistory(contratoId: string) {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API_URL}/chat/${contractId}/history`, { headers });
+  const res = await fetch(`${API_URL}/chat/${contratoId}/history`, { headers });
   if (!res.ok) throw new Error("Error al obtener historial");
   return res.json();
 }

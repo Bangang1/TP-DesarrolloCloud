@@ -2,12 +2,14 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { uploadContract } from "@/lib/api";
+import { registrarContrato } from "@/lib/api";
+import { generateUploadUrl } from "@/actions/azure";
+import { createClient } from "@/lib/supabase/client";
 
 type Step = { label: string; sub: string; status: "done" | "inProgress" | "pending" };
 
 const INITIAL_STEPS: Step[] = [
-  { label: "Paso 1: Leyendo documento",      sub: "Extracción OCR y tokenización estructural finalizada", status: "pending" },
+  { label: "Paso 1: Subiendo a Azure Blob Storage", sub: "Carga directa y segura a la nube vía SAS Token", status: "pending" },
   { label: "Paso 2: Analizando cláusulas con IA", sub: "Evaluando penalidades, plazos de rescisión y jurisprudencia", status: "pending" },
   { label: "Paso 3: Generando resumen y detección de riesgos", sub: "Matriz ejecutiva y recomendaciones de mitigación", status: "pending" },
 ];
@@ -35,7 +37,7 @@ export default function UploadPage() {
   }, []);
 
   const simulateProgress = (contractId: string) => {
-    let step = 0;
+    let step = 1; // Ya hicimos el paso 0 real
     const updateStep = (i: number, status: Step["status"]) => {
       setSteps((prev) => prev.map((s, idx) => idx === i ? { ...s, status } : s));
     };
@@ -56,9 +58,42 @@ export default function UploadPage() {
     if (!file) return;
     setUploading(true);
     setSteps(INITIAL_STEPS);
+    
+    // Marcar el primer paso (Subida) como en progreso
+    setSteps((prev) => prev.map((s, idx) => idx === 0 ? { ...s, status: "inProgress" } : s));
+
     try {
-      const res = await uploadContract(file);
+      // 1. Obtener usuario de Supabase
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Debes iniciar sesión");
+
+      // 2. Generar SAS Token con Server Action
+      const uuid = crypto.randomUUID();
+      const filePath = `contratos/${user.id}/${uuid}.pdf`;
+      const { uploadUrl, publicUrl } = await generateUploadUrl(filePath);
+
+      // 3. Subir a Azure mediante fetch PUT directo
+      const azureRes = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          "x-ms-blob-type": "BlockBlob",
+          "Content-Type": file.type,
+        },
+        body: file,
+      });
+
+      if (!azureRes.ok) {
+        throw new Error("Error subiendo el archivo a Azure Storage.");
+      }
+
+      // 4. Registrar en FastAPI
+      const res = await registrarContrato(user.id, publicUrl);
+      
+      // Completar el primer paso e iniciar la simulación de los siguientes
+      setSteps((prev) => prev.map((s, idx) => idx === 0 ? { ...s, status: "done" } : s));
       simulateProgress(res.id);
+      
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Error al subir el contrato");
       setUploading(false);
