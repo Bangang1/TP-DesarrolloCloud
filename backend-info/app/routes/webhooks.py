@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, Request
-from app.models.contract import Contract, ContractStatus
+from app.models.contrato import Contrato
 from app.models.analysis import Analysis
 from app.core.config import settings
 from beanie import PydanticObjectId
-from datetime import datetime
+from datetime import datetime, timezone
 
 router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
 
@@ -19,7 +19,7 @@ async def n8n_analysis_complete(request: Request):
         "secret": "...",
         "contract_id": "...",
         "user_id": "...",
-        "status": "completed" | "error",
+        "status": "completado" | "error",
         "summary": "...",
         "parties": [...],
         "key_dates": [...],
@@ -37,20 +37,19 @@ async def n8n_analysis_complete(request: Request):
     contract_id = payload.get("contract_id")
     status = payload.get("status", "error")
 
-    contract = await Contract.get(contract_id)
-    if not contract:
+    contrato = await Contrato.get(contract_id)
+    if not contrato:
         raise HTTPException(status_code=404, detail="Contrato no encontrado")
 
     if status == "error":
-        contract.status = ContractStatus.ERROR
-        contract.error_message = payload.get("error_message", "Error desconocido en el procesamiento")
-        await contract.save()
+        contrato.estado = "error"
+        await contrato.save()
         return {"ok": True, "status": "error registrado"}
 
     # Guardar analisis en MongoDB
     analysis = Analysis(
         contract_id=PydanticObjectId(contract_id),
-        user_id=contract.user_id,
+        user_id=contrato.usuario_id,
         summary=payload.get("summary", ""),
         parties=payload.get("parties", []),
         key_dates=payload.get("key_dates", []),
@@ -60,10 +59,10 @@ async def n8n_analysis_complete(request: Request):
     )
     await analysis.insert()
 
-    # Actualizar estado del contrato
-    contract.status = ContractStatus.COMPLETED
-    contract.processed_at = datetime.utcnow()
-    await contract.save()
+    # Actualizar estado del contrato y guardar el resumen en analisis_ia
+    contrato.estado = "completado"
+    contrato.analisis_ia = payload.get("summary", "")
+    await contrato.save()
 
     return {"ok": True, "analysis_id": str(analysis.id)}
 
@@ -80,10 +79,10 @@ async def n8n_analysis_progress(request: Request):
         raise HTTPException(status_code=403, detail="Secret invalido")
 
     contract_id = payload.get("contract_id")
-    contract = await Contract.get(contract_id)
+    contrato = await Contrato.get(contract_id)
 
-    if contract:
-        contract.status = ContractStatus.PROCESSING
-        await contract.save()
+    if contrato:
+        contrato.estado = "procesando"
+        await contrato.save()
 
     return {"ok": True}

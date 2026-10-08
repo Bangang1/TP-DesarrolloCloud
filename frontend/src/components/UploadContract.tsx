@@ -91,8 +91,8 @@ export default function UploadContract() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          usuario_id: user.id,
           contrato_url: publicUrl,
+          nombre_archivo: file.name,
         }),
       });
 

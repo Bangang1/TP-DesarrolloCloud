@@ -1,7 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 from app.core.config import settings
-from app.models.contract import Contract
+from app.models.contrato import Contrato
 from app.models.analysis import Analysis
 from app.models.chat_session import ChatSession
 
@@ -11,7 +11,7 @@ async def connect_db():
     client = AsyncIOMotorClient(settings.mongodb_url)
     await init_beanie(
         database=client[settings.mongodb_db_name],
-        document_models=[Contract, Analysis, ChatSession],
+        document_models=[Contrato, Analysis, ChatSession],
     )
     print(f"[DB] Conectado a MongoDB: {settings.mongodb_db_name}")
 

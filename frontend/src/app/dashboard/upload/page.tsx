@@ -88,7 +88,7 @@ export default function UploadPage() {
       }
 
       // 4. Registrar en FastAPI
-      const res = await registrarContrato(user.id, publicUrl);
+      const res = await registrarContrato(publicUrl, file.name);
       
       // Completar el primer paso e iniciar la simulación de los siguientes
       setSteps((prev) => prev.map((s, idx) => idx === 0 ? { ...s, status: "done" } : s));

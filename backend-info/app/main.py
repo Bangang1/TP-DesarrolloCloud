@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.core.database import connect_db
-from app.routes import contracts, chat, webhooks
+from app.routes import contratos, chat, webhooks
 
 
 @asynccontextmanager
@@ -30,7 +30,7 @@ app.add_middleware(
 )
 
 # Rutas
-app.include_router(contracts.router)
+app.include_router(contratos.router)
 app.include_router(chat.router)
 app.include_router(webhooks.router)
 

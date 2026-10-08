@@ -46,7 +46,8 @@ Si la informacion no esta en el contrato, indicalo claramente.
 
     messages = [
         {"role": "system", "content": context},
-        *chat_history[-10:],  # Ultimos 10 mensajes del historial
+        # Ultimos 10 mensajes del historial (OpenAI solo acepta role/content)
+        *({"role": m["role"], "content": m["content"]} for m in chat_history[-10:]),
         {"role": "user", "content": question},
     ]
 

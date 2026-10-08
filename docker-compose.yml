@@ -42,6 +42,10 @@ services:
       N8N_BASIC_AUTH_PASSWORD: password
       WEBHOOK_URL: http://localhost:5678
       GENERIC_TIMEZONE: America/Argentina/Buenos_Aires
+      # Debe coincidir con N8N_WEBHOOK_SECRET de backend-info/.env
+      N8N_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET}
+      # El workflow lee el secret con $env
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
     volumes:
       - n8n_data:/home/node/.n8n
       - ./n8n-workflows:/workflows

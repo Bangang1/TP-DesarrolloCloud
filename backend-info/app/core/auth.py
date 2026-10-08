@@ -1,30 +1,35 @@
-import httpx
+"""
+Verificación de JWT de Supabase para proteger endpoints de FastAPI.
+
+Decodifica el token JWT enviado por el frontend (via @supabase/ssr)
+y extrae el `sub` (user ID) del payload. Usa la clave pública (JWT Secret)
+del proyecto de Supabase para verificar la firma.
+"""
+
 from fastapi import HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jose import jwt, JWTError
 from app.core.config import settings
 
 security = HTTPBearer()
 
 
-async def verify_clerk_token(
+async def verify_supabase_token(
     credentials: HTTPAuthorizationCredentials = Security(security),
 ) -> dict:
     """
-    Verifica el token JWT de Clerk contra la API de Clerk.
-    Retorna el payload del usuario si es valido.
+    Decodifica y verifica el JWT de Supabase.
+    Retorna el payload completo (incluye 'sub' con el user ID).
     """
     token = credentials.credentials
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            "https://api.clerk.com/v1/tokens/verify",
-            headers={
-                "Authorization": f"Bearer {settings.clerk_secret_key}",
-                "Content-Type": "application/json",
-            },
-            params={"token": token},
+
+    try:
+        payload = jwt.decode(
+            token,
+            settings.supabase_jwt_secret,
+            algorithms=["HS256"],
+            audience="authenticated",
         )
-
-    if response.status_code != 200:
-        raise HTTPException(status_code=401, detail="Token invalido o expirado")
-
-    return response.json()
+        return payload
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado")

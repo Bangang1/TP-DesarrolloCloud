@@ -1,1 +1,1 @@
-from app.routes import contracts, chat, webhooks
+from app.routes import contratos, chat, webhooks

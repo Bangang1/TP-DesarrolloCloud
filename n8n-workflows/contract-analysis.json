@@ -4,7 +4,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "contract-analysis",
+        "path": "analizar-contrato",
         "responseMode": "responseNode",
         "options": {}
       },
@@ -12,16 +12,19 @@
       "name": "Webhook - Recibir Contrato",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.1,
-      "position": [240, 300],
-      "webhookId": "contract-analysis"
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "analizar-contrato"
     },
     {
       "parameters": {
         "conditions": {
           "string": [
             {
-              "value1": "={{ $json.secret }}",
-              "value2": "{{ $env.N8N_WEBHOOK_SECRET }}"
+              "value1": "={{ $json.body.secret }}",
+              "value2": "={{ $env.N8N_WEBHOOK_SECRET }}"
             }
           ]
         }
@@ -30,19 +33,44 @@
       "name": "Validar Secret",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [460, 300]
+      "position": [
+        460,
+        300
+      ]
     },
     {
       "parameters": {
-        "url": "=https://s3.amazonaws.com/{{ $env.AWS_BUCKET_NAME }}/{{ $json.s3_key }}",
-        "responseFormat": "file",
-        "options": {}
+        "url": "={{ $json.body.contrato_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
       },
-      "id": "download-from-s3",
-      "name": "Descargar PDF de S3",
+      "id": "download-from-azure",
+      "name": "Descargar PDF de Azure",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [680, 200]
+      "position": [
+        680,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "id": "extract-pdf-text",
+      "name": "Extraer Texto PDF",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        790,
+        200
+      ]
     },
     {
       "parameters": {
@@ -66,7 +94,10 @@
       "name": "Analizar con GPT-4o",
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1,
-      "position": [900, 200]
+      "position": [
+        1010,
+        200
+      ]
     },
     {
       "parameters": {
@@ -75,16 +106,46 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "secret", "value": "={{ $env.N8N_WEBHOOK_SECRET }}" },
-            { "name": "contract_id", "value": "={{ $('Webhook - Recibir Contrato').item.json.contract_id }}" },
-            { "name": "user_id", "value": "={{ $('Webhook - Recibir Contrato').item.json.user_id }}" },
-            { "name": "status", "value": "completed" },
-            { "name": "summary", "value": "={{ JSON.parse($json.message.content).summary }}" },
-            { "name": "parties", "value": "={{ JSON.parse($json.message.content).parties }}" },
-            { "name": "key_dates", "value": "={{ JSON.parse($json.message.content).key_dates }}" },
-            { "name": "risks", "value": "={{ JSON.parse($json.message.content).risks }}" },
-            { "name": "clauses", "value": "={{ JSON.parse($json.message.content).clauses }}" },
-            { "name": "raw_text", "value": "={{ $('Descargar PDF de S3').item.json.text }}" }
+            {
+              "name": "secret",
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "contract_id",
+              "value": "={{ $('Webhook - Recibir Contrato').item.json.body.contrato_id }}"
+            },
+            {
+              "name": "user_id",
+              "value": "={{ $('Webhook - Recibir Contrato').item.json.body.usuario_id }}"
+            },
+            {
+              "name": "status",
+              "value": "completado"
+            },
+            {
+              "name": "summary",
+              "value": "={{ JSON.parse($json.message.content).summary }}"
+            },
+            {
+              "name": "parties",
+              "value": "={{ JSON.parse($json.message.content).parties }}"
+            },
+            {
+              "name": "key_dates",
+              "value": "={{ JSON.parse($json.message.content).key_dates }}"
+            },
+            {
+              "name": "risks",
+              "value": "={{ JSON.parse($json.message.content).risks }}"
+            },
+            {
+              "name": "clauses",
+              "value": "={{ JSON.parse($json.message.content).clauses }}"
+            },
+            {
+              "name": "raw_text",
+              "value": "={{ $('Extraer Texto PDF').item.json.text }}"
+            }
           ]
         },
         "options": {}
@@ -93,7 +154,10 @@
       "name": "Notificar Backend - Exito",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [1120, 200]
+      "position": [
+        1230,
+        200
+      ]
     },
     {
       "parameters": {
@@ -102,10 +166,22 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "secret", "value": "={{ $env.N8N_WEBHOOK_SECRET }}" },
-            { "name": "contract_id", "value": "={{ $('Webhook - Recibir Contrato').item.json.contract_id }}" },
-            { "name": "status", "value": "error" },
-            { "name": "error_message", "value": "Secret invalido" }
+            {
+              "name": "secret",
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "contract_id",
+              "value": "={{ $('Webhook - Recibir Contrato').item.json.body.contrato_id }}"
+            },
+            {
+              "name": "status",
+              "value": "error"
+            },
+            {
+              "name": "error_message",
+              "value": "Secret invalido"
+            }
           ]
         },
         "options": {}
@@ -114,7 +190,10 @@
       "name": "Notificar Backend - Error",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [680, 400]
+      "position": [
+        680,
+        400
+      ]
     },
     {
       "parameters": {
@@ -125,29 +204,79 @@
       "name": "Responder Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [460, 500]
+      "position": [
+        460,
+        500
+      ]
     }
   ],
   "connections": {
     "Webhook - Recibir Contrato": {
       "main": [
         [
-          { "node": "Validar Secret", "type": "main", "index": 0 },
-          { "node": "Responder Webhook", "type": "main", "index": 0 }
+          {
+            "node": "Validar Secret",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Responder Webhook",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Validar Secret": {
       "main": [
-        [{ "node": "Descargar PDF de S3", "type": "main", "index": 0 }],
-        [{ "node": "Notificar Backend - Error", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Descargar PDF de Azure",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notificar Backend - Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "Descargar PDF de S3": {
-      "main": [[{ "node": "Analizar con GPT-4o", "type": "main", "index": 0 }]]
+    "Descargar PDF de Azure": {
+      "main": [
+        [
+          {
+            "node": "Extraer Texto PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer Texto PDF": {
+      "main": [
+        [
+          {
+            "node": "Analizar con GPT-4o",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Analizar con GPT-4o": {
-      "main": [[{ "node": "Notificar Backend - Exito", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Notificar Backend - Exito",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {

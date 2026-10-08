@@ -25,18 +25,19 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 // ─── Contratos ───────────────────────────────────────────────────────────────
 
 /**
- * Registra un contrato (ya subido a Firebase Storage) en el backend
+ * Registra un contrato (ya subido a Azure Blob Storage) en el backend
  * y dispara el análisis de IA en segundo plano.
+ * El usuario lo determina el backend a partir del token de Supabase.
  */
-export async function registrarContrato(usuarioId: string, contratoUrl: string) {
+export async function registrarContrato(contratoUrl: string, nombreArchivo?: string) {
   const headers = await getAuthHeaders();
 
   const res = await fetch(`${API_URL}/api/contratos/analizar`, {
     method: "POST",
     headers,
     body: JSON.stringify({
-      usuario_id: usuarioId,
       contrato_url: contratoUrl,
+      nombre_archivo: nombreArchivo,
     }),
   });
 
@@ -44,21 +45,21 @@ export async function registrarContrato(usuarioId: string, contratoUrl: string) 
   return res.json();
 }
 
-export async function getContratos() {
+export async function getContracts() {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API_URL}/api/contratos/`, { headers });
   if (!res.ok) throw new Error("Error al obtener contratos");
   return res.json();
 }
 
-export async function getContrato(id: string) {
+export async function getContract(id: string) {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API_URL}/api/contratos/${id}`, { headers });
   if (!res.ok) throw new Error("Contrato no encontrado");
   return res.json();
 }
 
-export async function deleteContrato(id: string) {
+export async function deleteContract(id: string) {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API_URL}/api/contratos/${id}`, {
     method: "DELETE",
