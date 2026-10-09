@@ -1,5 +1,7 @@
 {
+  "id": "analizarContrato",
   "name": "Contract Analysis Pipeline",
+  "active": false,
   "nodes": [
     {
       "parameters": {
