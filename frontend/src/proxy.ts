@@ -1,5 +1,5 @@
 /**
- * Middleware Supabase para refrescar sesiones y proteger rutas.
+ * Proxy (ex middleware) de Supabase para refrescar sesiones y proteger rutas.
  * Reemplaza el anterior middleware de Clerk.
  */
 import { createServerClient } from "@supabase/ssr";
@@ -14,7 +14,7 @@ function isPublicRoute(pathname: string): boolean {
   );
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
