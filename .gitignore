@@ -59,3 +59,4 @@ docker-compose.override.yml
 .claude/settings.local.json
 /CLAUDE.md
 /frontend/CLAUDE.md
+/frontend/AGENTS.md
