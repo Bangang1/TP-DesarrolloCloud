@@ -48,7 +48,7 @@ cp frontend/.env.local.example frontend/.env.local    # frontend Next.js
 ```
 
 - `backend-info/.env`: `SUPABASE_URL`, `OPENAI_API_KEY`, `N8N_WEBHOOK_SECRET` y las tres variables `AZURE_STORAGE_*`. `MONGODB_URL` lo sobrescribe docker-compose.
-- `.env` (raíz): `N8N_WEBHOOK_SECRET`, con **el mismo valor** que en `backend-info/.env`.
+- `.env` (raíz): `N8N_WEBHOOK_SECRET`, con **el mismo valor** que en `backend-info/.env`, y `MONGO_ROOT_USER` / `MONGO_ROOT_PASSWORD` (credenciales de MongoDB; elegí una contraseña segura, solo letras y números).
 - `frontend/.env.local`: Supabase, `NEXT_PUBLIC_API_URL` (URL pública del backend, ej. `https://api.tudominio.com`) y las mismas variables `AZURE_STORAGE_*`.
 
 Si el frontend se sirve desde otro dominio, agregalo a `allow_origins` en `backend-info/app/main.py`.
@@ -68,7 +68,7 @@ Esto levantará:
 
 ### 5. Configurar n8n
 
-1. Accede a n8n en tu navegador: `http://TU_IP:5678` (usuario y contraseña definidos en `docker-compose.yml`).
+1. Accede a n8n en tu navegador: `http://TU_IP:5678`. La primera vez te pide crear la cuenta de administrador.
 2. Ve a **Workflows** → **Import from File** e importa `n8n-workflows/contract-analysis.json`.
 3. Configura la credencial de **OpenAI** en el nodo "Analizar con GPT-4o-mini".
 4. Activa el workflow. Queda escuchando en `http://n8n:5678/webhook/analizar-contrato`, que es el valor por defecto de `N8N_WEBHOOK_URL` en el backend.
