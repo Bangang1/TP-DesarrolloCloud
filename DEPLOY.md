@@ -70,7 +70,7 @@ Esto levantará:
 
 1. Accede a n8n en tu navegador: `http://TU_IP:5678` (usuario y contraseña definidos en `docker-compose.yml`).
 2. Ve a **Workflows** → **Import from File** e importa `n8n-workflows/contract-analysis.json`.
-3. Configura la credencial de **OpenAI** en el nodo "Analizar con GPT-4o".
+3. Configura la credencial de **OpenAI** en el nodo "Analizar con GPT-4o-mini".
 4. Activa el workflow. Queda escuchando en `http://n8n:5678/webhook/analizar-contrato`, que es el valor por defecto de `N8N_WEBHOOK_URL` en el backend.
 
 n8n no necesita credenciales de Azure: el backend le envía una URL con SAS de lectura válida por 1 hora.

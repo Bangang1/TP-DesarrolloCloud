@@ -75,7 +75,7 @@
     {
       "parameters": {
         "resource": "chat",
-        "model": "gpt-4o",
+        "model": "gpt-4o-mini",
         "messages": {
           "values": [
             {
@@ -91,7 +91,7 @@
         "options": {}
       },
       "id": "analyze-with-gpt",
-      "name": "Analizar con GPT-4o",
+      "name": "Analizar con GPT-4o-mini",
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1,
       "position": [
@@ -260,14 +260,14 @@
       "main": [
         [
           {
-            "node": "Analizar con GPT-4o",
+            "node": "Analizar con GPT-4o-mini",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Analizar con GPT-4o": {
+    "Analizar con GPT-4o-mini": {
       "main": [
         [
           {

@@ -18,7 +18,7 @@ Frontend (Next.js) ──> Backend (FastAPI) ──webhook──> n8n ──> Op
 1. El usuario inicia sesión con Supabase (email o Google).
 2. El frontend pide un SAS de escritura (Server Action) y sube el PDF directo a Azure Blob Storage.
 3. El frontend registra el contrato en FastAPI, que lo guarda en MongoDB y dispara el webhook de n8n con una URL de lectura temporal.
-4. n8n descarga el PDF, extrae el texto, lo analiza con GPT-4o y envía el resultado al backend.
+4. n8n descarga el PDF, extrae el texto, lo analiza con GPT-4o-mini y envía el resultado al backend.
 5. El usuario consulta el análisis y chatea sobre el contrato.
 
 ## Servicios

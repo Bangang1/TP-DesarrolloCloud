@@ -52,7 +52,7 @@ Si la informacion no esta en el contrato, indicalo claramente.
     ]
 
     response = await client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4o-mini",
         messages=messages,
         temperature=0.2,
         max_tokens=1000,
