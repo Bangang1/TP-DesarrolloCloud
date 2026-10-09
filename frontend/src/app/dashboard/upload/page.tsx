@@ -21,7 +21,6 @@ export default function UploadPage() {
   const [dragging, setDragging]   = useState(false);
   const [uploading, setUploading] = useState(false);
   const [steps, setSteps]         = useState<Step[]>(INITIAL_STEPS);
-  const [currentStep, setCurrentStep] = useState(-1);
   const [error, setError]         = useState("");
 
   const setFile_ = (f: File) => {
@@ -45,7 +44,6 @@ export default function UploadPage() {
       if (step > 0) updateStep(step - 1, "done");
       if (step < 3) {
         updateStep(step, "inProgress");
-        setCurrentStep(step);
         step++;
       } else {
         clearInterval(iv);

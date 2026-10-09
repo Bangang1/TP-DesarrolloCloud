@@ -1,6 +1,11 @@
 "use server";
 
-import { BlobServiceClient, generateBlobSASQueryParameters, BlobSASPermissions } from "@azure/storage-blob";
+import {
+  BlobServiceClient,
+  generateBlobSASQueryParameters,
+  BlobSASPermissions,
+  StorageSharedKeyCredential,
+} from "@azure/storage-blob";
 
 /**
  * Genera una URL firmada (SAS Token) para subir un archivo directamente a Azure Blob Storage.
@@ -34,7 +39,7 @@ export async function generateUploadUrl(fileName: string) {
       permissions: BlobSASPermissions.parse("w"), // Solo escritura
       expiresOn,
     },
-    blobServiceClient.credential as any
+    blobServiceClient.credential as StorageSharedKeyCredential
   ).toString();
 
   // La URL pública base (sin el token) para pasársela al backend después

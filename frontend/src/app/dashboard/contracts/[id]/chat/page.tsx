@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { sendChatMessage, getChatHistory } from "@/lib/api";
 
 type Message = {
@@ -22,15 +22,14 @@ export default function ChatPage({ params }: { params: { id: string } }) {
   const [histLoading, setHistLoading] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const load = useCallback(async () => {
-    try {
-      const data = await getChatHistory(params.id);
-      setMessages(data.messages ?? []);
-    } catch { /* no-op */ }
-    finally { setHistLoading(false); }
+  useEffect(() => {
+    let cancelado = false;
+    getChatHistory(params.id)
+      .then((data) => { if (!cancelado) setMessages(data.messages ?? []); })
+      .catch(() => { /* no-op */ })
+      .finally(() => { if (!cancelado) setHistLoading(false); });
+    return () => { cancelado = true; };
   }, [params.id]);
-
-  useEffect(() => { load(); }, [load]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const send = async (text: string) => {
