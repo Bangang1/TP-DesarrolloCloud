@@ -27,7 +27,7 @@ cd DesarrolloCloud
 **Supabase**
 - En *Authentication → Providers* habilitá Email y Google.
 - En *Authentication → URL Configuration* agregá `https://tu-dominio/auth/callback` como Redirect URL.
-- En *Project Settings → API* copiá la URL, la `anon key` y el *JWT Secret* (lo usa el backend para verificar tokens).
+- En *Project Settings → API* copiá la URL y la `anon key`. El backend verifica los tokens con las claves públicas del proyecto (JWKS), así que solo necesita `SUPABASE_URL`; el *JWT Secret* (legacy) hace falta únicamente si el proyecto todavía firma con HS256.
 
 **Azure Blob Storage**
 - Creá un contenedor **privado** (por ejemplo `contratos`). El backend genera URLs de lectura temporales (SAS) para n8n, así que no hace falta acceso público.
@@ -47,7 +47,7 @@ cp backend-info/.env.example backend-info/.env        # backend FastAPI
 cp frontend/.env.local.example frontend/.env.local    # frontend Next.js
 ```
 
-- `backend-info/.env`: `SUPABASE_JWT_SECRET`, `OPENAI_API_KEY`, `N8N_WEBHOOK_SECRET` y las tres variables `AZURE_STORAGE_*`. `MONGODB_URL` lo sobrescribe docker-compose.
+- `backend-info/.env`: `SUPABASE_URL`, `OPENAI_API_KEY`, `N8N_WEBHOOK_SECRET` y las tres variables `AZURE_STORAGE_*`. `MONGODB_URL` lo sobrescribe docker-compose.
 - `.env` (raíz): `N8N_WEBHOOK_SECRET`, con **el mismo valor** que en `backend-info/.env`.
 - `frontend/.env.local`: Supabase, `NEXT_PUBLIC_API_URL` (URL pública del backend, ej. `https://api.tudominio.com`) y las mismas variables `AZURE_STORAGE_*`.
 

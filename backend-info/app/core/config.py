@@ -7,7 +7,8 @@ class Settings(BaseSettings):
     mongodb_url: str = "mongodb://localhost:27017"
     mongodb_db_name: str = "contratos_db"
 
-    # Supabase (verificación JWT en el backend)
+    # Supabase (verificación JWT: JWKS para claves asimétricas, secret para legacy HS256)
+    supabase_url: str = ""
     supabase_jwt_secret: str = ""
 
     # Azure Blob Storage (SAS de lectura para n8n y borrado de PDFs)
