@@ -45,7 +45,38 @@ npm install
 npm run dev
 ```
 
-Después importá y activá el workflow de n8n (ver [DEPLOY.md](DEPLOY.md), paso 5).
+Después importá y activá el workflow de n8n (ver [DEPLOY.md](DEPLOY.md), paso 5). También se puede hacer por línea de comandos:
+
+```bash
+docker exec contratos_n8n n8n import:workflow --input=/workflows/contract-analysis.json
+docker exec contratos_n8n n8n publish:workflow --id=analizarContrato
+docker compose restart n8n
+```
+
+## Tests
+
+El backend tiene tests con `pytest`. Usan una MongoDB en memoria, así que no hace falta Docker ni claves de Supabase, Azure u OpenAI:
+
+```bash
+cd backend-info
+pip install -r requirements-dev.txt
+pytest
+```
+
+En el frontend, el control de calidad es ESLint, TypeScript y el build:
+
+```bash
+cd frontend
+npm run lint && npx tsc --noEmit && npm run build
+```
+
+## Integración continua
+
+En cada push o Pull Request a `main`, GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)) corre los tests del backend y el lint, TypeScript, build y `npm audit` del frontend. El resultado se ve en la pestaña **Actions** del repositorio.
+
+## Uso de IA en el desarrollo
+
+Cada decisión tomada con ayuda de herramientas de IA queda registrada en [AI-DECISIONS.md](AI-DECISIONS.md): qué se pidió, qué propuso la IA, qué se corrigió y cómo se validó.
 
 ## Estructura
 
