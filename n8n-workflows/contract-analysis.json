@@ -36,7 +36,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        460,
+        680,
         300
       ]
     },
@@ -56,9 +56,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        680,
+        900,
         200
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -70,9 +71,10 @@
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1,
       "position": [
-        790,
+        1120,
         200
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -97,9 +99,10 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1,
       "position": [
-        1010,
+        1340,
         200
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -157,9 +160,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        1230,
+        1560,
         200
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -182,7 +186,7 @@
             },
             {
               "name": "error_message",
-              "value": "Secret invalido"
+              "value": "={{ $json.error?.message ?? 'Error al analizar el contrato' }}"
             }
           ]
         },
@@ -193,8 +197,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        680,
-        400
+        1340,
+        440
       ]
     },
     {
@@ -208,7 +212,7 @@
       "typeVersion": 1,
       "position": [
         460,
-        500
+        300
       ]
     }
   ],
@@ -217,12 +221,18 @@
       "main": [
         [
           {
-            "node": "Validar Secret",
+            "node": "Responder Webhook",
             "type": "main",
             "index": 0
-          },
+          }
+        ]
+      ]
+    },
+    "Responder Webhook": {
+      "main": [
+        [
           {
-            "node": "Responder Webhook",
+            "node": "Validar Secret",
             "type": "main",
             "index": 0
           }
@@ -238,13 +248,7 @@
             "index": 0
           }
         ],
-        [
-          {
-            "node": "Notificar Backend - Error",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Descargar PDF de Azure": {
@@ -252,6 +256,13 @@
         [
           {
             "node": "Extraer Texto PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notificar Backend - Error",
             "type": "main",
             "index": 0
           }
@@ -266,6 +277,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Notificar Backend - Error",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -274,6 +292,25 @@
         [
           {
             "node": "Notificar Backend - Exito",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notificar Backend - Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar Backend - Exito": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Notificar Backend - Error",
             "type": "main",
             "index": 0
           }
