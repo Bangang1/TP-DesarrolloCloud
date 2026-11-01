@@ -51,7 +51,7 @@ cp frontend/.env.local.example frontend/.env.local    # frontend Next.js
 - `.env` (raíz): `N8N_WEBHOOK_SECRET`, con **el mismo valor** que en `backend-info/.env`, y `MONGO_ROOT_USER` / `MONGO_ROOT_PASSWORD` (credenciales de MongoDB; elegí una contraseña segura, solo letras y números).
 - `frontend/.env.local`: Supabase, `NEXT_PUBLIC_API_URL` (URL pública del backend, ej. `https://api.tudominio.com`) y las mismas variables `AZURE_STORAGE_*`.
 
-Si el frontend se sirve desde otro dominio, agregalo a `allow_origins` en `backend-info/app/main.py`.
+Si el frontend se sirve desde otro dominio, agregalo a `CORS_ORIGINS` en `backend-info/.env` (separado por coma, ej: `http://localhost:3000,https://suchus.vercel.app`) y reiniciá el backend.
 
 ### 4. Iniciar los Servicios Backend (Docker)
 

@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
 
@@ -27,9 +27,15 @@ class Settings(BaseSettings):
     app_env: str = "development"
     app_secret_key: str = "changeme"
 
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
+    # CORS: orígenes del frontend permitidos, separados por coma
+    # ej: "http://localhost:3000,https://suchus.vercel.app"
+    cors_origins: str = "http://localhost:3000"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [o.strip().rstrip("/") for o in self.cors_origins.split(",") if o.strip()]
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 @lru_cache
