@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { getContract } from "@/lib/api";
 
 type Analysis = {
@@ -25,13 +25,14 @@ const RISK_COLORS = {
   low:    { label: "Riesgo bajo",   bg: "rgba(34,197,94,0.08)",   border: "rgba(34,197,94,0.2)",   text: "#22c55e" },
 };
 
-export default function AnalysisPage({ params }: { params: { id: string } }) {
+export default function AnalysisPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [contract, setContract] = useState<ContractDetail | null>(null);
   const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
-    getContract(params.id).then((d) => { setContract(d); setLoading(false); }).catch(() => setLoading(false));
-  }, [params.id]);
+    getContract(id).then((d) => { setContract(d); setLoading(false); }).catch(() => setLoading(false));
+  }, [id]);
 
   if (loading) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh", color: "#64748b" }}>
@@ -63,7 +64,7 @@ export default function AnalysisPage({ params }: { params: { id: string } }) {
           fontSize: "0.65rem", fontWeight: 700, padding: "3px 8px", borderRadius: "4px",
           background: "rgba(255,255,255,0.05)", color: "#64748b", border: "1px solid rgba(255,255,255,0.08)",
         }}>
-          AUDITORÍA ACTIVA #{params.id.slice(-4).toUpperCase()}
+          AUDITORÍA ACTIVA #{id.slice(-4).toUpperCase()}
         </span>
         {highCount > 0 && (
           <span style={{
@@ -82,12 +83,13 @@ export default function AnalysisPage({ params }: { params: { id: string } }) {
             {contract?.filename?.replace(/\.[^.]+$/, "") ?? "Contrato"}
           </h1>
           <p style={{ fontSize: "0.72rem", color: "#64748b", marginTop: "4px" }}>
-            Escaneo algorítmico completado con modelo Suchus-Legal-v2.1 · {analysis?.clauses?.length ?? 0} páginas analizadas
+            Analizado con IA (gpt-4o-mini) · {analysis?.clauses?.length ?? 0} cláusulas analizadas
           </p>
         </div>
         <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
-          <button className="btn-sm">📤 Exportar Dictamen</button>
-          <Link href={`/dashboard/contracts/${params.id}/chat`} className="btn-teal-sm">
+          <button className="btn-sm" onClick={() => window.print()} disabled={!analysis}
+            title="Imprimir o guardar el dictamen como PDF">📤 Exportar Dictamen</button>
+          <Link href={`/dashboard/contracts/${id}/chat`} className="btn-teal-sm">
             💬 Preguntar a la IA →
           </Link>
         </div>
@@ -200,7 +202,7 @@ export default function AnalysisPage({ params }: { params: { id: string } }) {
                         ? "Reducir ventana de preaviso a 30 días."
                         : "Sin observaciones obligatorias."}
                     </p>
-                    <Link href={`/dashboard/contracts/${params.id}/chat`}
+                    <Link href={`/dashboard/contracts/${id}/chat`}
                       style={{ fontSize: "0.7rem", color: "#2dd4bf", textDecoration: "none" }}>
                       Redactar contrapropuesta con IA →
                     </Link>
@@ -235,7 +237,7 @@ export default function AnalysisPage({ params }: { params: { id: string } }) {
                       <p style={{ fontSize: "0.75rem", color: "#94a3b8", lineHeight: 1.6, marginBottom: "10px" }}>
                         {risk.severity === "high" ? "Negociar tope del 10% y plan de gracia de 10 días." : risk.severity === "medium" ? "Reducir ventana de preaviso a 30 días. Ajustar término de preaviso →" : "Sin observaciones. Alineada a los estándares habituales de la industria corporativa."}
                       </p>
-                      <Link href={`/dashboard/contracts/${params.id}/chat`} style={{ fontSize: "0.7rem", color: "#2dd4bf", textDecoration: "none" }}>
+                      <Link href={`/dashboard/contracts/${id}/chat`} style={{ fontSize: "0.7rem", color: "#2dd4bf", textDecoration: "none" }}>
                         Redactar contrapropuesta con IA →
                       </Link>
                     </div>
@@ -264,7 +266,7 @@ export default function AnalysisPage({ params }: { params: { id: string } }) {
             </div>
           </div>
         </div>
-        <Link href={`/dashboard/contracts/${params.id}/chat`} className="btn-teal-sm" style={{ whiteSpace: "nowrap" }}>
+        <Link href={`/dashboard/contracts/${id}/chat`} className="btn-teal-sm" style={{ whiteSpace: "nowrap" }}>
           Ir al Chat con IA →
         </Link>
       </div>

@@ -538,3 +538,28 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   background: radial-gradient(circle, rgba(20, 184, 166, 0.25) 0%, rgba(20, 184, 166, 0) 70%);
 }
 
+
+/* Impresión ("Exportar Dictamen"): sin menú ni botones, texto oscuro sobre blanco */
+@media print {
+  .sidebar,
+  .proto-tag,
+  button,
+  a.btn-sm,
+  a.btn-teal-sm {
+    display: none !important;
+  }
+
+  .main-content {
+    margin: 0 !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  html,
+  body,
+  .main-content * {
+    background: transparent !important;
+    color: #111 !important;
+    box-shadow: none !important;
+  }
+}
