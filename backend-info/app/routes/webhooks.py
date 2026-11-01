@@ -1,3 +1,5 @@
+import hmac
+
 from fastapi import APIRouter, HTTPException, Request
 from app.models.contrato import Contrato
 from app.models.analysis import Analysis
@@ -6,6 +8,25 @@ from beanie import PydanticObjectId
 from datetime import datetime, timezone
 
 router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
+
+
+def _validar_secret(payload: dict) -> None:
+    """Rechaza el request si el secret no coincide o si no hay secret configurado."""
+    esperado = settings.n8n_webhook_secret
+    recibido = str(payload.get("secret") or "")
+    if not esperado or not hmac.compare_digest(recibido.encode(), esperado.encode()):
+        raise HTTPException(status_code=403, detail="Secret invalido")
+
+
+async def _obtener_contrato(contract_id) -> Contrato:
+    try:
+        oid = PydanticObjectId(contract_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Contrato no encontrado")
+    contrato = await Contrato.get(oid)
+    if not contrato:
+        raise HTTPException(status_code=404, detail="Contrato no encontrado")
+    return contrato
 
 
 @router.post("/n8n/analysis-complete")
@@ -30,16 +51,10 @@ async def n8n_analysis_complete(request: Request):
     """
     payload = await request.json()
 
-    # Verificar secret para seguridad
-    if payload.get("secret") != settings.n8n_webhook_secret:
-        raise HTTPException(status_code=403, detail="Secret invalido")
+    _validar_secret(payload)
 
-    contract_id = payload.get("contract_id")
     status = payload.get("status", "error")
-
-    contrato = await Contrato.get(contract_id)
-    if not contrato:
-        raise HTTPException(status_code=404, detail="Contrato no encontrado")
+    contrato = await _obtener_contrato(payload.get("contract_id"))
 
     if status == "error":
         contrato.estado = "error"
@@ -48,7 +63,7 @@ async def n8n_analysis_complete(request: Request):
 
     # Guardar analisis en MongoDB
     analysis = Analysis(
-        contract_id=PydanticObjectId(contract_id),
+        contract_id=contrato.id,
         user_id=contrato.usuario_id,
         summary=payload.get("summary", ""),
         parties=payload.get("parties", []),
@@ -75,14 +90,10 @@ async def n8n_analysis_progress(request: Request):
     """
     payload = await request.json()
 
-    if payload.get("secret") != settings.n8n_webhook_secret:
-        raise HTTPException(status_code=403, detail="Secret invalido")
+    _validar_secret(payload)
 
-    contract_id = payload.get("contract_id")
-    contrato = await Contrato.get(contract_id)
-
-    if contrato:
-        contrato.estado = "procesando"
-        await contrato.save()
+    contrato = await _obtener_contrato(payload.get("contract_id"))
+    contrato.estado = "procesando"
+    await contrato.save()
 
     return {"ok": True}

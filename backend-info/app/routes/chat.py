@@ -6,9 +6,16 @@ from app.models.chat_session import ChatSession
 from app.models.analysis import Analysis
 from app.services.llm import answer_contract_question
 from beanie import PydanticObjectId
-from datetime import datetime
+from datetime import datetime, timezone
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
+
+
+def _parsear_id(contrato_id: str) -> PydanticObjectId:
+    try:
+        return PydanticObjectId(contrato_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Contrato no encontrado")
 
 
 class ChatRequest(BaseModel):
@@ -28,7 +35,7 @@ async def chat_with_contract(
     user_id = user["sub"]
 
     # Verificar que el contrato existe y pertenece al usuario
-    contrato = await Contrato.get(contrato_id)
+    contrato = await Contrato.get(_parsear_id(contrato_id))
     if not contrato or contrato.usuario_id != user_id:
         raise HTTPException(status_code=404, detail="Contrato no encontrado")
 
@@ -40,13 +47,13 @@ async def chat_with_contract(
 
     # Buscar o crear sesion de chat para este contrato
     session = await ChatSession.find_one(
-        ChatSession.contract_id == PydanticObjectId(contrato_id),
+        ChatSession.contract_id == _parsear_id(contrato_id),
         ChatSession.user_id == user_id,
     )
 
     if not session:
         session = ChatSession(
-            contract_id=PydanticObjectId(contrato_id),
+            contract_id=contrato.id,
             user_id=user_id,
             messages=[],
         )
@@ -60,9 +67,9 @@ async def chat_with_contract(
     )
 
     # Guardar el intercambio en el historial
-    session.messages.append({"role": "user", "content": body.question, "timestamp": datetime.utcnow().isoformat()})
-    session.messages.append({"role": "assistant", "content": answer, "timestamp": datetime.utcnow().isoformat()})
-    session.updated_at = datetime.utcnow()
+    session.messages.append({"role": "user", "content": body.question, "timestamp": datetime.now(timezone.utc).isoformat()})
+    session.messages.append({"role": "assistant", "content": answer, "timestamp": datetime.now(timezone.utc).isoformat()})
+    session.updated_at = datetime.now(timezone.utc)
     await session.save()
 
     return {"answer": answer, "session_id": str(session.id)}
@@ -74,7 +81,7 @@ async def get_chat_history(contrato_id: str, user: dict = Depends(verify_supabas
     user_id = user["sub"]
 
     session = await ChatSession.find_one(
-        ChatSession.contract_id == PydanticObjectId(contrato_id),
+        ChatSession.contract_id == _parsear_id(contrato_id),
         ChatSession.user_id == user_id,
     )
 
