@@ -74,6 +74,10 @@ npm run lint && npx tsc --noEmit && npm run build
 
 En cada push o Pull Request a `main`, GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)) corre los tests del backend y el lint, TypeScript, build y `npm audit` del frontend. El resultado se ve en la pestaña **Actions** del repositorio.
 
+## Uso de IA en el desarrollo
+
+Cada decisión tomada con ayuda de herramientas de IA queda registrada en [AI-DECISIONS.md](AI-DECISIONS.md): qué se pidió, qué propuso la IA, qué se corrigió y cómo se validó.
+
 ## Estructura
 
 ```
