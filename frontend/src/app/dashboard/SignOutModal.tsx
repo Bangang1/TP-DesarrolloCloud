@@ -1,10 +1,28 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { getContracts } from "@/lib/api";
 
 export default function SignOutModal({ onClose }: { onClose: () => void }) {
   const router = useRouter();
+  const [email, setEmail] = useState<string | null>(null);
+  const [ultimoContrato, setUltimoContrato] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelado = false;
+    createClient().auth.getUser().then(({ data }) => {
+      if (!cancelado) setEmail(data.user?.email ?? null);
+    });
+    // El backend devuelve los contratos del más reciente al más antiguo
+    getContracts()
+      .then((lista: { filename: string }[]) => {
+        if (!cancelado && lista.length > 0) setUltimoContrato(lista[0].filename.replace(/\.[^.]+$/, ""));
+      })
+      .catch(() => { /* sin contratos: se oculta la fila */ });
+    return () => { cancelado = true; };
+  }, []);
 
   const handleSignOut = async () => {
     const supabase = createClient();
@@ -87,7 +105,9 @@ export default function SignOutModal({ onClose }: { onClose: () => void }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
             <div>
               <div style={{ fontSize: "0.65rem", color: "#6b7280", marginBottom: "3px" }}>Usuario autenticado</div>
-              <div style={{ fontSize: "0.8rem", fontWeight: 600, color: "#e2e8f0" }}>👤 Usuario</div>
+              <div style={{ fontSize: "0.8rem", fontWeight: 600, color: "#e2e8f0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                👤 {email ?? "Usuario"}
+              </div>
               <div style={{ fontSize: "0.68rem", color: "#6b7280" }}>Alumno / Dev</div>
             </div>
             <div>
@@ -96,18 +116,20 @@ export default function SignOutModal({ onClose }: { onClose: () => void }) {
               <div style={{ fontSize: "0.68rem", color: "#6b7280" }}>Fase Piloto Académico MVP</div>
             </div>
           </div>
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "10px" }}>
-            <div style={{ fontSize: "0.65rem", color: "#6b7280", marginBottom: "4px" }}>Último contrato analizado</div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.78rem", color: "#e2e8f0" }}>
-                <span>📄</span> Contrato de Servicios — Empresa XYZ
+          {ultimoContrato && (
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "10px" }}>
+              <div style={{ fontSize: "0.65rem", color: "#6b7280", marginBottom: "4px" }}>Último contrato subido</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.78rem", color: "#e2e8f0" }}>
+                  <span>📄</span> {ultimoContrato}
+                </div>
+                <span style={{
+                  fontSize: "0.65rem", padding: "2px 8px", borderRadius: "4px",
+                  background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)",
+                }}>Guardado</span>
               </div>
-              <span style={{
-                fontSize: "0.65rem", padding: "2px 8px", borderRadius: "4px",
-                background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)",
-              }}>Guardado auto</span>
             </div>
-          </div>
+          )}
         </div>
 
         <p style={{ fontSize: "0.72rem", color: "#6b7280", marginBottom: "20px", lineHeight: 1.5 }}>

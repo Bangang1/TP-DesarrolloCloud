@@ -1,0 +1,16 @@
+# Secretos: se pasan en tiempo de ejecución (env_file en docker-compose), nunca dentro de la imagen
+.env
+.env.*
+!.env.example
+
+# Tests y herramientas de desarrollo
+tests/
+pytest.ini
+requirements-dev.txt
+
+# Basura de Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/

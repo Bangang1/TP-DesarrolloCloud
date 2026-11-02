@@ -1,13 +1,25 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { sendChatMessage, getChatHistory } from "@/lib/api";
-import { useParams } from "next/navigation";
+import { use, useEffect, useState, useRef } from "react";
+import { sendChatMessage, getChatHistory, getContract } from "@/lib/api";
 
 type Message = {
   role: "user" | "assistant";
   content: string;
   timestamp?: string;
+};
+
+type ContractInfo = {
+  filename: string;
+  status: string;
+  analysis?: { risks?: unknown[]; clauses?: unknown[] };
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  completed: "● Análisis completo",
+  processing: "● Procesando…",
+  pending: "● Pendiente",
+  error: "● Error en el análisis",
 };
 
 const SUGGESTED = [
@@ -16,12 +28,13 @@ const SUGGESTED = [
   "¿Qué cláusulas presentan riesgos?",
 ];
 
-export default function ChatPage() {
-  const { id } = useParams<{ id: string }>();
+export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput]       = useState("");
   const [loading, setLoading]   = useState(false);
   const [histLoading, setHistLoading] = useState(true);
+  const [contract, setContract] = useState<ContractInfo | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,6 +43,9 @@ export default function ChatPage() {
       .then((data) => { if (!cancelado) setMessages(data.messages ?? []); })
       .catch(() => { /* no-op */ })
       .finally(() => { if (!cancelado) setHistLoading(false); });
+    getContract(id)
+      .then((data) => { if (!cancelado) setContract(data); })
+      .catch(() => { /* el banner muestra valores por defecto */ });
     return () => { cancelado = true; };
   }, [id]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
@@ -74,22 +90,28 @@ export default function ChatPage() {
             fontSize: "0.6rem", fontWeight: 700, padding: "2px 7px", borderRadius: "4px",
             background: "rgba(20,184,166,0.1)", color: "#2dd4bf", border: "1px solid rgba(20,184,166,0.25)",
           }}>CONTRATO ACTIVO</span>
-          <span style={{ fontSize: "0.65rem", color: "#64748b" }}>● Indexado (RAG v2.4)</span>
+          <span style={{ fontSize: "0.65rem", color: "#64748b" }}>
+            {contract ? (STATUS_LABEL[contract.status] ?? contract.status) : "● Cargando…"}
+          </span>
           <span style={{ fontSize: "0.75rem", color: "#94a3b8", fontWeight: 500 }}>
-            Contrato de Servicios — Empresa XYZ
+            {contract?.filename?.replace(/\.[^.]+$/, "") ?? "Contrato"}
           </span>
         </div>
-        <span style={{ fontSize: "0.65rem", color: "#64748b" }}>📄 48 Páginas · 142 Vectores semánticos</span>
+        {contract?.analysis && (
+          <span style={{ fontSize: "0.65rem", color: "#64748b" }}>
+            📄 {contract.analysis.clauses?.length ?? 0} cláusulas · {contract.analysis.risks?.length ?? 0} riesgos detectados
+          </span>
+        )}
       </div>
 
       {/* Header */}
       <div style={{ marginBottom: "16px" }}>
         <div style={{ fontSize: "0.65rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "4px" }}>
-          AUDITORÍA AUMENTADA · Búsqueda Semántica Vectorial
+          AUDITORÍA AUMENTADA · Chat con IA
         </div>
         <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#e2e8f0", marginBottom: "4px" }}>Preguntale a tu contrato</h1>
         <p style={{ fontSize: "0.75rem", color: "#64748b" }}>
-          Consultá cualquier información del documento analizado mediante búsqueda semántica con citas directas verificadas.
+          Consultá cualquier información del documento analizado. Las respuestas se basan en el texto y el análisis del contrato.
         </p>
       </div>
 

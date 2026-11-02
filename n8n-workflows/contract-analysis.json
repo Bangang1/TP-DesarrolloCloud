@@ -121,25 +121,8 @@
       "position": [
         1230,
         200
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "=http://backend-info:8000/webhooks/n8n/analysis-complete",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ secret: $env.N8N_WEBHOOK_SECRET, contract_id: $('Webhook - Recibir Contrato').item.json.body.contrato_id, status: 'error', error_message: 'Secret invalido' }) }}",
-        "options": {}
-      },
-      "id": "notify-backend-error",
-      "name": "Notificar Backend - Error",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        680,
-        400
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -199,13 +182,7 @@
             "index": 0
           }
         ],
-        [
-          {
-            "node": "Notificar Backend - Error",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Descargar PDF de Azure": {
@@ -256,6 +233,18 @@
         [
           {
             "node": "Respuesta en mantenimiento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar Backend - Exito": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Notificar Backend - Falla",
             "type": "main",
             "index": 0
           }

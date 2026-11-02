@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { getContract } from "@/lib/api";
-import { useParams } from "next/navigation";
 
 type Analysis = {
   summary: string;
@@ -26,8 +25,8 @@ const RISK_COLORS = {
   low:    { label: "Riesgo bajo",   bg: "rgba(34,197,94,0.08)",   border: "rgba(34,197,94,0.2)",   text: "#22c55e" },
 };
 
-export default function AnalysisPage() {
-  const { id } = useParams<{ id: string }>();
+export default function AnalysisPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [contract, setContract] = useState<ContractDetail | null>(null);
   const [loading, setLoading]   = useState(true);
 
@@ -84,11 +83,12 @@ export default function AnalysisPage() {
             {contract?.filename?.replace(/\.[^.]+$/, "") ?? "Contrato"}
           </h1>
           <p style={{ fontSize: "0.72rem", color: "#64748b", marginTop: "4px" }}>
-            Escaneo algorítmico completado con modelo Suchus-Legal-v2.1 · {analysis?.clauses?.length ?? 0} páginas analizadas
+            Analizado con IA (gpt-4o-mini) · {analysis?.clauses?.length ?? 0} cláusulas analizadas
           </p>
         </div>
         <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
-          <button className="btn-sm">📤 Exportar Dictamen</button>
+          <button className="btn-sm" onClick={() => window.print()} disabled={!analysis}
+            title="Imprimir o guardar el dictamen como PDF">📤 Exportar Dictamen</button>
           <Link href={`/dashboard/contracts/${id}/chat`} className="btn-teal-sm">
             💬 Preguntar a la IA →
           </Link>
