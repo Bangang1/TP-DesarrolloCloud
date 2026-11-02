@@ -63,3 +63,4 @@ docker-compose.override.yml
 
 # Notas locales
 /RESUMEN-SESION.txt
+/AI-DECISIONS.md
