@@ -84,7 +84,7 @@
         "nodeCredentialType": "openAiApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: 'gpt-4o-mini', temperature: 0.2, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: \"Eres un experto en analisis de contratos legales. Analiza el siguiente contrato y extrae la informacion en formato JSON con esta estructura exacta:\\n\\n{\\n  \\\"summary\\\": \\\"Resumen ejecutivo del contrato en 2-3 parrafos\\\",\\n  \\\"parties\\\": [\\\"Nombre Parte 1\\\", \\\"Nombre Parte 2\\\"],\\n  \\\"key_dates\\\": [\\n    {\\\"type\\\": \\\"inicio\\\", \\\"date\\\": \\\"YYYY-MM-DD\\\", \\\"description\\\": \\\"...\\\"}\\n  ],\\n  \\\"risks\\\": [\\n    {\\\"clause\\\": \\\"Clausula X\\\", \\\"description\\\": \\\"Descripcion del riesgo\\\", \\\"severity\\\": \\\"low|medium|high\\\"}\\n  ],\\n  \\\"clauses\\\": [\\n    {\\\"title\\\": \\\"Titulo clausula\\\", \\\"content\\\": \\\"Contenido relevante\\\"}\\n  ]\\n}\\n\\nResponde SOLO con el JSON, sin texto adicional.\" }, { role: 'user', content: 'Analiza este contrato:\n\n' + ($json.text || '').slice(0, 60000) } ] }) }}",
+        "jsonBody": "={{ JSON.stringify({ model: 'gpt-4o-mini', temperature: 0.2, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: \"Eres un experto en analisis de contratos legales. Analiza el siguiente contrato y extrae la informacion en formato JSON con esta estructura exacta:\\n\\n{\\n  \\\"summary\\\": \\\"Resumen ejecutivo del contrato en 2-3 parrafos\\\",\\n  \\\"parties\\\": [\\\"Nombre Parte 1\\\", \\\"Nombre Parte 2\\\"],\\n  \\\"key_dates\\\": [\\n    {\\\"type\\\": \\\"inicio\\\", \\\"date\\\": \\\"YYYY-MM-DD\\\", \\\"description\\\": \\\"...\\\"}\\n  ],\\n  \\\"risks\\\": [\\n    {\\\"clause\\\": \\\"Clausula X\\\", \\\"description\\\": \\\"Descripcion del riesgo\\\", \\\"severity\\\": \\\"low|medium|high\\\"}\\n  ],\\n  \\\"clauses\\\": [\\n    {\\\"title\\\": \\\"Titulo clausula\\\", \\\"content\\\": \\\"Contenido relevante\\\"}\\n  ]\\n}\\n\\nResponde SOLO con el JSON, sin texto adicional.\" }, { role: 'user', content: 'Analiza este contrato:\\n\\n' + ($json.text || '').slice(0, 60000) } ] }) }}",
         "options": {
           "timeout": 120000
         }
@@ -155,7 +155,25 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1010,
+        900,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://backend-info:8000/webhooks/n8n/analysis-complete",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ secret: $env.N8N_WEBHOOK_SECRET, contract_id: $('Webhook - Recibir Contrato').item.json.body.contrato_id, user_id: $('Webhook - Recibir Contrato').item.json.body.usuario_id, status: 'completado', summary: 'En mantenimiento, vuelva pronto.', parties: [], key_dates: [], risks: [], clauses: [], raw_text: $('Extraer Texto PDF').item.json.text || '' }) }}",
+        "options": {}
+      },
+      "id": "notify-backend-maintenance",
+      "name": "Respuesta en mantenimiento",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1230,
         420
       ]
     }
@@ -237,7 +255,7 @@
         ],
         [
           {
-            "node": "Notificar Backend - Falla",
+            "node": "Respuesta en mantenimiento",
             "type": "main",
             "index": 0
           }

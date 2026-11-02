@@ -46,7 +46,8 @@ async def n8n_analysis_complete(request: Request):
         await contrato.save()
         return {"ok": True, "status": "error registrado"}
 
-    # Guardar analisis en MongoDB
+    # Guardar analisis en MongoDB (reemplaza el anterior si el contrato se re-analiza)
+    await Analysis.find(Analysis.contract_id == contrato.id).delete()
     analysis = Analysis(
         contract_id=PydanticObjectId(contract_id),
         user_id=contrato.usuario_id,

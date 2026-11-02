@@ -1,9 +1,18 @@
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, OpenAIError
 from app.core.config import settings
 from app.models.analysis import Analysis
 from beanie import PydanticObjectId
 
 client = AsyncOpenAI(api_key=settings.openai_api_key)
+
+# Respuesta provisoria mientras no haya API key de OpenAI (o si OpenAI falla)
+MENSAJE_MANTENIMIENTO = "En mantenimiento, vuelva pronto."
+
+
+def ia_disponible() -> bool:
+    """True si hay una API key de OpenAI configurada (no vacía ni el placeholder)."""
+    key = (settings.openai_api_key or "").strip()
+    return bool(key) and key.upper() != "COMPLETAR"
 
 
 async def answer_contract_question(
@@ -22,6 +31,9 @@ async def answer_contract_question(
 
     if not analysis:
         return "Aun no se ha completado el analisis de este contrato. Por favor espera unos minutos."
+
+    if not ia_disponible():
+        return MENSAJE_MANTENIMIENTO
 
     # Construir contexto con el analisis
     context = f"""
@@ -51,11 +63,15 @@ Si la informacion no esta en el contrato, indicalo claramente.
         {"role": "user", "content": question},
     ]
 
-    response = await client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=messages,
-        temperature=0.2,
-        max_tokens=1000,
-    )
+    try:
+        response = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            temperature=0.2,
+            max_tokens=1000,
+        )
+    except OpenAIError as e:
+        print(f"[OpenAI] Error al responder el chat: {e}")
+        return MENSAJE_MANTENIMIENTO
 
     return response.choices[0].message.content
