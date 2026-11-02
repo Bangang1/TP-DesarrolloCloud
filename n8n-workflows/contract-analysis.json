@@ -7,7 +7,7 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "analizar-contrato",
-        "responseMode": "responseNode",
+        "responseMode": "onReceived",
         "options": {}
       },
       "id": "webhook-trigger",
@@ -58,7 +58,8 @@
       "position": [
         680,
         200
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -72,90 +73,51 @@
       "position": [
         790,
         200
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "resource": "chat",
-        "model": "gpt-4o-mini",
-        "messages": {
-          "values": [
-            {
-              "role": "system",
-              "content": "Eres un experto en analisis de contratos legales. Analiza el siguiente contrato y extrae la informacion en formato JSON con esta estructura exacta:\n\n{\n  \"summary\": \"Resumen ejecutivo del contrato en 2-3 parrafos\",\n  \"parties\": [\"Nombre Parte 1\", \"Nombre Parte 2\"],\n  \"key_dates\": [\n    {\"type\": \"inicio\", \"date\": \"YYYY-MM-DD\", \"description\": \"...\"}\n  ],\n  \"risks\": [\n    {\"clause\": \"Clausula X\", \"description\": \"Descripcion del riesgo\", \"severity\": \"low|medium|high\"}\n  ],\n  \"clauses\": [\n    {\"title\": \"Titulo clausula\", \"content\": \"Contenido relevante\"}\n  ]\n}\n\nResponde SOLO con el JSON, sin texto adicional."
-            },
-            {
-              "role": "user",
-              "content": "=Analiza este contrato:\n\n{{ $json.text }}"
-            }
-          ]
-        },
-        "options": {}
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'gpt-4o-mini', temperature: 0.2, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: \"Eres un experto en analisis de contratos legales. Analiza el siguiente contrato y extrae la informacion en formato JSON con esta estructura exacta:\\n\\n{\\n  \\\"summary\\\": \\\"Resumen ejecutivo del contrato en 2-3 parrafos\\\",\\n  \\\"parties\\\": [\\\"Nombre Parte 1\\\", \\\"Nombre Parte 2\\\"],\\n  \\\"key_dates\\\": [\\n    {\\\"type\\\": \\\"inicio\\\", \\\"date\\\": \\\"YYYY-MM-DD\\\", \\\"description\\\": \\\"...\\\"}\\n  ],\\n  \\\"risks\\\": [\\n    {\\\"clause\\\": \\\"Clausula X\\\", \\\"description\\\": \\\"Descripcion del riesgo\\\", \\\"severity\\\": \\\"low|medium|high\\\"}\\n  ],\\n  \\\"clauses\\\": [\\n    {\\\"title\\\": \\\"Titulo clausula\\\", \\\"content\\\": \\\"Contenido relevante\\\"}\\n  ]\\n}\\n\\nResponde SOLO con el JSON, sin texto adicional.\" }, { role: 'user', content: 'Analiza este contrato:\n\n' + ($json.text || '').slice(0, 60000) } ] }) }}",
+        "options": {
+          "timeout": 120000
+        }
       },
       "id": "analyze-with-gpt",
       "name": "Analizar con GPT-4o-mini",
-      "type": "@n8n/n8n-nodes-langchain.openAi",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         1010,
         200
-      ]
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openaiCredencial",
+          "name": "OpenAI"
+        }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
         "method": "POST",
         "url": "=http://backend-info:8000/webhooks/n8n/analysis-complete",
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "secret",
-              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
-            },
-            {
-              "name": "contract_id",
-              "value": "={{ $('Webhook - Recibir Contrato').item.json.body.contrato_id }}"
-            },
-            {
-              "name": "user_id",
-              "value": "={{ $('Webhook - Recibir Contrato').item.json.body.usuario_id }}"
-            },
-            {
-              "name": "status",
-              "value": "completado"
-            },
-            {
-              "name": "summary",
-              "value": "={{ JSON.parse($json.message.content).summary }}"
-            },
-            {
-              "name": "parties",
-              "value": "={{ JSON.parse($json.message.content).parties }}"
-            },
-            {
-              "name": "key_dates",
-              "value": "={{ JSON.parse($json.message.content).key_dates }}"
-            },
-            {
-              "name": "risks",
-              "value": "={{ JSON.parse($json.message.content).risks }}"
-            },
-            {
-              "name": "clauses",
-              "value": "={{ JSON.parse($json.message.content).clauses }}"
-            },
-            {
-              "name": "raw_text",
-              "value": "={{ $('Extraer Texto PDF').item.json.text }}"
-            }
-          ]
-        },
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ secret: $env.N8N_WEBHOOK_SECRET, contract_id: $('Webhook - Recibir Contrato').item.json.body.contrato_id, user_id: $('Webhook - Recibir Contrato').item.json.body.usuario_id, status: 'completado', summary: JSON.parse($json.choices[0].message.content).summary, parties: JSON.parse($json.choices[0].message.content).parties || [], key_dates: JSON.parse($json.choices[0].message.content).key_dates || [], risks: JSON.parse($json.choices[0].message.content).risks || [], clauses: JSON.parse($json.choices[0].message.content).clauses || [], raw_text: $('Extraer Texto PDF').item.json.text || '' }) }}",
         "options": {}
       },
       "id": "notify-backend",
       "name": "Notificar Backend - Exito",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
+      "typeVersion": 4.2,
       "position": [
         1230,
         200
@@ -166,32 +128,14 @@
         "method": "POST",
         "url": "=http://backend-info:8000/webhooks/n8n/analysis-complete",
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "secret",
-              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
-            },
-            {
-              "name": "contract_id",
-              "value": "={{ $('Webhook - Recibir Contrato').item.json.body.contrato_id }}"
-            },
-            {
-              "name": "status",
-              "value": "error"
-            },
-            {
-              "name": "error_message",
-              "value": "Secret invalido"
-            }
-          ]
-        },
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ secret: $env.N8N_WEBHOOK_SECRET, contract_id: $('Webhook - Recibir Contrato').item.json.body.contrato_id, status: 'error', error_message: 'Secret invalido' }) }}",
         "options": {}
       },
       "id": "notify-backend-error",
       "name": "Notificar Backend - Error",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
+      "typeVersion": 4.2,
       "position": [
         680,
         400
@@ -199,16 +143,20 @@
     },
     {
       "parameters": {
-        "respondWith": "json",
-        "responseBody": "={ \"received\": true }"
+        "method": "POST",
+        "url": "=http://backend-info:8000/webhooks/n8n/analysis-complete",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ secret: $env.N8N_WEBHOOK_SECRET, contract_id: $('Webhook - Recibir Contrato').item.json.body.contrato_id, status: 'error', error_message: ($json.error && $json.error.message) || 'Error en el análisis' }) }}",
+        "options": {}
       },
-      "id": "respond-webhook",
-      "name": "Responder Webhook",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
+      "id": "notify-backend-failure",
+      "name": "Notificar Backend - Falla",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
-        460,
-        500
+        1010,
+        420
       ]
     }
   ],
@@ -218,11 +166,6 @@
         [
           {
             "node": "Validar Secret",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Responder Webhook",
             "type": "main",
             "index": 0
           }
@@ -255,6 +198,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Notificar Backend - Falla",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -266,6 +216,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Notificar Backend - Falla",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -274,6 +231,13 @@
         [
           {
             "node": "Notificar Backend - Exito",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notificar Backend - Falla",
             "type": "main",
             "index": 0
           }

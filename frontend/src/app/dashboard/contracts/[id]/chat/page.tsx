@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { sendChatMessage, getChatHistory } from "@/lib/api";
+import { useParams } from "next/navigation";
 
 type Message = {
   role: "user" | "assistant";
@@ -15,7 +16,8 @@ const SUGGESTED = [
   "¿Qué cláusulas presentan riesgos?",
 ];
 
-export default function ChatPage({ params }: { params: { id: string } }) {
+export default function ChatPage() {
+  const { id } = useParams<{ id: string }>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput]       = useState("");
   const [loading, setLoading]   = useState(false);
@@ -24,12 +26,12 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     let cancelado = false;
-    getChatHistory(params.id)
+    getChatHistory(id)
       .then((data) => { if (!cancelado) setMessages(data.messages ?? []); })
       .catch(() => { /* no-op */ })
       .finally(() => { if (!cancelado) setHistLoading(false); });
     return () => { cancelado = true; };
-  }, [params.id]);
+  }, [id]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const send = async (text: string) => {
@@ -40,7 +42,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
     try {
-      const res = await sendChatMessage(params.id, q);
+      const res = await sendChatMessage(id, q);
       const aiMsg: Message = { role: "assistant", content: res.answer, timestamp: new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }) };
       setMessages((prev) => [...prev, aiMsg]);
     } catch {
