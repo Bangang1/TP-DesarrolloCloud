@@ -1,15 +1,18 @@
 import httpx
 from app.core.config import settings
+from app.services.storage import get_download_url
 
 
-async def trigger_contract_analysis(contract_id: str, s3_key: str, user_id: str) -> bool:
+async def trigger_contract_analysis(contract_id: str, blob_name: str, user_id: str) -> bool:
     """
     Dispara el webhook de n8n para iniciar el procesamiento del contrato.
-    n8n tomara el contrato de S3, lo analizara con LLM y guardara el resultado en MongoDB.
+    n8n descarga el archivo desde file_url (URL temporal de Azure), lo analiza con LLM
+    y avisa el resultado al webhook del backend.
     """
     payload = {
         "contract_id": contract_id,
-        "s3_key": s3_key,
+        "blob_name": blob_name,
+        "file_url": get_download_url(blob_name),
         "user_id": user_id,
         "secret": settings.n8n_webhook_secret,
     }

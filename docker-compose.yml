@@ -8,8 +8,8 @@ services:
     ports:
       - "27017:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
       MONGO_INITDB_DATABASE: contratos_db
     volumes:
       - mongodb_data:/data/db
@@ -21,8 +21,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      MONGODB_URL: mongodb://admin:password@mongodb:27017/contratos_db?authSource=admin
+      MONGODB_URL: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongodb:27017/contratos_db?authSource=admin
       MONGODB_DB_NAME: contratos_db
+      # La misma clave y modelo de Claude que usa n8n (se cargan una sola vez en el .env raiz)
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-haiku-5-5}
     env_file:
       - ./backend-info/.env
     depends_on:
@@ -42,6 +45,13 @@ services:
       N8N_BASIC_AUTH_PASSWORD: password
       WEBHOOK_URL: http://localhost:5678
       GENERIC_TIMEZONE: America/Argentina/Buenos_Aires
+      N8N_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET}
+      # Modelo de Claude que usa el workflow para analizar los contratos
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL:-https://api.anthropic.com}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-haiku-5-5}
+      # Permite leer las variables $env desde los nodos del workflow
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
     volumes:
       - n8n_data:/home/node/.n8n
       - ./n8n-workflows:/workflows

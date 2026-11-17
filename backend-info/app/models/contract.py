@@ -13,11 +13,10 @@ class ContractStatus(str, Enum):
 
 
 class Contract(Document):
-    user_id: str                          # Clerk user ID
-    org_id: Optional[str] = None         # Clerk organization ID
+    user_id: str                          # Supabase user ID
+    org_id: Optional[str] = None         # Organizacion (sin uso por ahora)
     filename: str                         # Nombre original del archivo
-    s3_key: str                          # Ruta en S3
-    s3_url: Optional[str] = None         # URL publica temporal
+    blob_name: str                       # Nombre del blob en Azure Storage
     status: ContractStatus = ContractStatus.PENDING
     error_message: Optional[str] = None
     uploaded_at: datetime = Field(default_factory=datetime.utcnow)

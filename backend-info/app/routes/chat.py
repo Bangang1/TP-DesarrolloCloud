@@ -1,6 +1,8 @@
+import anthropic
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from app.core.auth import verify_clerk_token
+from app.core.auth import get_current_user
+from app.core.config import settings
 from app.models.contract import Contract, ContractStatus
 from app.models.chat_session import ChatSession
 from app.models.analysis import Analysis
@@ -19,7 +21,7 @@ class ChatRequest(BaseModel):
 async def chat_with_contract(
     contract_id: str,
     body: ChatRequest,
-    user: dict = Depends(verify_clerk_token),
+    user: dict = Depends(get_current_user),
 ):
     """
     Recibe una pregunta del usuario sobre un contrato y retorna la respuesta del LLM.
@@ -53,11 +55,21 @@ async def chat_with_contract(
         await session.insert()
 
     # Obtener respuesta del LLM usando el analisis como contexto
-    answer = await answer_contract_question(
-        contract_id=contract_id,
-        question=body.question,
-        chat_history=session.messages,
-    )
+    if not settings.anthropic_api_key:
+        raise HTTPException(status_code=503, detail="El chat no esta configurado: falta la clave de Claude (ANTHROPIC_API_KEY)")
+
+    try:
+        answer = await answer_contract_question(
+            contract_id=contract_id,
+            question=body.question,
+            chat_history=session.messages,
+        )
+    except anthropic.AuthenticationError:
+        raise HTTPException(status_code=503, detail="El chat no esta configurado: falta una clave valida de Claude")
+    except anthropic.RateLimitError:
+        raise HTTPException(status_code=503, detail="Claude esta recibiendo demasiados pedidos. Proba de nuevo en un momento.")
+    except anthropic.APIError:
+        raise HTTPException(status_code=502, detail="No se pudo obtener una respuesta de Claude")
 
     # Guardar el intercambio en el historial
     session.messages.append({"role": "user", "content": body.question, "timestamp": datetime.utcnow().isoformat()})
@@ -69,7 +81,7 @@ async def chat_with_contract(
 
 
 @router.get("/{contract_id}/history")
-async def get_chat_history(contract_id: str, user: dict = Depends(verify_clerk_token)):
+async def get_chat_history(contract_id: str, user: dict = Depends(get_current_user)):
     """Retorna el historial completo de chat para un contrato."""
     user_id = user["sub"]
 

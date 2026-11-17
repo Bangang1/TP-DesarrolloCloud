@@ -1,9 +1,16 @@
 "use client";
 
-import { useClerk } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
-export default function SignOutModal({ onClose }: { onClose: () => void }) {
-  const { signOut } = useClerk();
+export default function SignOutModal({ userName, onClose }: { userName: string; onClose: () => void }) {
+  const router = useRouter();
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    router.replace("/");
+    router.refresh();
+  }
 
   return (
     <div
@@ -79,7 +86,7 @@ export default function SignOutModal({ onClose }: { onClose: () => void }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
             <div>
               <div style={{ fontSize: "0.65rem", color: "#6b7280", marginBottom: "3px" }}>Usuario autenticado</div>
-              <div style={{ fontSize: "0.8rem", fontWeight: 600, color: "#e2e8f0" }}>👤 Lucas M.</div>
+              <div style={{ fontSize: "0.8rem", fontWeight: 600, color: "#e2e8f0" }}>👤 {userName}</div>
               <div style={{ fontSize: "0.68rem", color: "#6b7280" }}>Alumno / Dev</div>
             </div>
             <div>
@@ -123,7 +130,7 @@ export default function SignOutModal({ onClose }: { onClose: () => void }) {
             ✕ Permanecer conectado
           </button>
           <button
-            onClick={() => signOut({ redirectUrl: "/" })}
+            onClick={signOut}
             style={{
               flex: 1, padding: "10px",
               background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)",

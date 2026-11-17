@@ -1,7 +1,8 @@
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
-from app.core.auth import verify_clerk_token
+from app.core.auth import get_current_user
 from app.models.contract import Contract, ContractStatus
-from app.services.storage import upload_file_to_s3, get_presigned_url
+from app.models.analysis import Analysis
+from app.services.storage import upload_file, get_download_url
 from app.services.n8n import trigger_contract_analysis
 from datetime import datetime
 
@@ -14,9 +15,9 @@ MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 @router.post("/", status_code=201)
 async def upload_contract(
     file: UploadFile = File(...),
-    user: dict = Depends(verify_clerk_token),
+    user: dict = Depends(get_current_user),
 ):
-    """Sube un contrato, lo guarda en S3 y dispara el analisis en n8n."""
+    """Sube un contrato, lo guarda en Azure Blob Storage y dispara el analisis en n8n."""
     user_id = user["sub"]
 
     # Validar tipo de archivo
@@ -28,15 +29,15 @@ async def upload_contract(
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="El archivo no puede superar 10MB")
 
-    # Subir a S3
-    s3_key = await upload_file_to_s3(content, file.filename, user_id)
+    # Subir a Azure Blob Storage
+    blob_name = await upload_file(content, file.filename, user_id, file.content_type)
 
     # Crear registro en MongoDB
     contract = Contract(
         user_id=user_id,
         org_id=user.get("org_id"),
         filename=file.filename,
-        s3_key=s3_key,
+        blob_name=blob_name,
         status=ContractStatus.PENDING,
     )
     await contract.insert()
@@ -44,7 +45,7 @@ async def upload_contract(
     # Disparar n8n en background
     triggered = await trigger_contract_analysis(
         contract_id=str(contract.id),
-        s3_key=s3_key,
+        blob_name=blob_name,
         user_id=user_id,
     )
 
@@ -61,7 +62,7 @@ async def upload_contract(
 
 
 @router.get("/")
-async def list_contracts(user: dict = Depends(verify_clerk_token)):
+async def list_contracts(user: dict = Depends(get_current_user)):
     """Lista todos los contratos del usuario autenticado."""
     user_id = user["sub"]
     contracts = await Contract.find(Contract.user_id == user_id).to_list()
@@ -78,7 +79,7 @@ async def list_contracts(user: dict = Depends(verify_clerk_token)):
 
 
 @router.get("/{contract_id}")
-async def get_contract(contract_id: str, user: dict = Depends(verify_clerk_token)):
+async def get_contract(contract_id: str, user: dict = Depends(get_current_user)):
     """Retorna el detalle de un contrato con URL temporal de descarga."""
     user_id = user["sub"]
     contract = await Contract.get(contract_id)
@@ -86,7 +87,8 @@ async def get_contract(contract_id: str, user: dict = Depends(verify_clerk_token
     if not contract or contract.user_id != user_id:
         raise HTTPException(status_code=404, detail="Contrato no encontrado")
 
-    download_url = get_presigned_url(contract.s3_key)
+    download_url = get_download_url(contract.blob_name)
+    analysis = await Analysis.find_one(Analysis.contract_id == contract.id)
 
     return {
         "id": str(contract.id),
@@ -96,11 +98,17 @@ async def get_contract(contract_id: str, user: dict = Depends(verify_clerk_token
         "uploaded_at": contract.uploaded_at,
         "processed_at": contract.processed_at,
         "error_message": contract.error_message,
+        "analysis": analysis and {
+            "summary": analysis.summary,
+            "parties": analysis.parties,
+            "key_dates": analysis.key_dates,
+            "clauses": analysis.clauses,
+        },
     }
 
 
 @router.delete("/{contract_id}", status_code=204)
-async def delete_contract(contract_id: str, user: dict = Depends(verify_clerk_token)):
+async def delete_contract(contract_id: str, user: dict = Depends(get_current_user)):
     """Elimina un contrato (solo el dueno puede eliminarlo)."""
     user_id = user["sub"]
     contract = await Contract.get(contract_id)

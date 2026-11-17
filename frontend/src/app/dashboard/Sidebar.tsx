@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useClerk, useUser } from "@clerk/nextjs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import SignOutModal from "./SignOutModal";
 
 const navItems = [
@@ -17,12 +18,15 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { user } = useUser();
+  const [user, setUser] = useState<User | null>(null);
   const [showSignOut, setShowSignOut] = useState(false);
 
-  const displayName = user?.firstName
-    ? `${user.firstName} ${user.lastName ?? ""}`.trim()
-    : user?.emailAddresses?.[0]?.emailAddress ?? "Usuario";
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  const displayName = user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email || "Usuario";
 
   const isActive = (href: string) =>
     href === "/dashboard" ? pathname === href : pathname.startsWith(href);
@@ -71,7 +75,7 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {showSignOut && <SignOutModal onClose={() => setShowSignOut(false)} />}
+      {showSignOut && <SignOutModal userName={displayName} onClose={() => setShowSignOut(false)} />}
     </>
   );
 }

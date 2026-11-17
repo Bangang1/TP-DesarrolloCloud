@@ -1,16 +1,16 @@
 from beanie import Document, PydanticObjectId
-from pydantic import Field
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, List
 
 
-class KeyDate(Field):
+class KeyDate(BaseModel):
     type: str       # ej: "vencimiento", "inicio", "renovacion"
     date: str       # ej: "2025-06-01"
     description: Optional[str] = None
 
 
-class Risk(Field):
+class Risk(BaseModel):
     clause: str
     description: str
     severity: str = "medium"   # low | medium | high
@@ -18,7 +18,7 @@ class Risk(Field):
 
 class Analysis(Document):
     contract_id: PydanticObjectId            # Referencia al contrato
-    user_id: str                             # Clerk user ID
+    user_id: str                             # Supabase user ID
     summary: str                             # Resumen ejecutivo del contrato
     parties: List[str] = []                 # Partes involucradas
     key_dates: List[dict] = []              # Fechas clave

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { use, useEffect, useState, useRef, useCallback } from "react";
 import { sendChatMessage, getChatHistory } from "@/lib/api";
 
 type Message = {
@@ -15,7 +15,8 @@ const SUGGESTED = [
   "¿Qué cláusulas presentan riesgos?",
 ];
 
-export default function ChatPage({ params }: { params: { id: string } }) {
+export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput]       = useState("");
   const [loading, setLoading]   = useState(false);
@@ -24,11 +25,11 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
   const load = useCallback(async () => {
     try {
-      const data = await getChatHistory(params.id);
+      const data = await getChatHistory(id);
       setMessages(data.messages ?? []);
     } catch { /* no-op */ }
     finally { setHistLoading(false); }
-  }, [params.id]);
+  }, [id]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
@@ -41,7 +42,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
     try {
-      const res = await sendChatMessage(params.id, q);
+      const res = await sendChatMessage(id, q);
       const aiMsg: Message = { role: "assistant", content: res.answer, timestamp: new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }) };
       setMessages((prev) => [...prev, aiMsg]);
     } catch {
