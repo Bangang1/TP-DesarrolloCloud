@@ -1,3 +1,71 @@
+<<<<<<< HEAD
 .env
 !.env.example
 __pycache__/
+=======
+# Entornos / Variables secretas (¡NUNCA SUBIR ESTO A GITHUB!)
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# Next.js / Frontend
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/node_modules/
+frontend/.clerk/
+
+# Node.js genérico
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Python / Backend (FastAPI / n8n)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+/lib/
+/lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+.venv/
+.env.py
+.pytest_cache/
+
+# Mac / Windows / IDEs
+.DS_Store
+.vscode/
+.idea/
+Thumbs.db
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Claude Code (config personal)
+.claude/settings.local.json
+/CLAUDE.md
+/frontend/CLAUDE.md
+/frontend/AGENTS.md
+
+# Notas locales
+/RESUMEN-SESION.txt
+>>>>>>> 0ce61968b85cf9eb3a6b73c82235f46ce73236f6

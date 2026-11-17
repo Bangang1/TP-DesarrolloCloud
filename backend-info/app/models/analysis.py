@@ -1,6 +1,10 @@
 from beanie import Document, PydanticObjectId
 from pydantic import BaseModel, Field
+<<<<<<< HEAD
 from datetime import datetime
+=======
+from datetime import datetime, timezone
+>>>>>>> 0ce61968b85cf9eb3a6b73c82235f46ce73236f6
 from typing import Optional, List
 
 
@@ -25,7 +29,7 @@ class Analysis(Document):
     risks: List[dict] = []                  # Riesgos identificados
     clauses: List[dict] = []               # Clausulas relevantes
     raw_text: str = ""                      # Texto completo extraido del PDF
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Settings:
         name = "analyses"

@@ -37,15 +37,19 @@ const LEVELS: Record<Level, { label: string; plural: string; bg: string; border:
 const LEVEL_ORDER: Level[] = ["critica", "importante", "leve"];
 const POLL_MS = 4000;
 
+<<<<<<< HEAD
 const cardStyle = { background: "#111827", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px" };
 const labelStyle = { fontSize: "0.6rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase" as const, letterSpacing: "0.06em", marginBottom: "6px" };
 
+=======
+>>>>>>> 0ce61968b85cf9eb3a6b73c82235f46ce73236f6
 export default function AnalysisPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [contract, setContract] = useState<ContractDetail | null>(null);
   const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
+<<<<<<< HEAD
     let timer: ReturnType<typeof setTimeout>;
     let cancelled = false;
 
@@ -65,6 +69,9 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
     load();
 
     return () => { cancelled = true; clearTimeout(timer); };
+=======
+    getContract(id).then((d) => { setContract(d); setLoading(false); }).catch(() => setLoading(false));
+>>>>>>> 0ce61968b85cf9eb3a6b73c82235f46ce73236f6
   }, [id]);
 
   if (loading) return (
@@ -97,6 +104,7 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
         <span className="proto-tag">Prototipo Académico</span>
       </div>
 
+<<<<<<< HEAD
       {/* Title + actions */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", marginBottom: "16px" }}>
         <div>
@@ -131,6 +139,44 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
           </p>
         </div>
       )}
+=======
+      {/* Auditoria badge */}
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+        <span style={{
+          fontSize: "0.65rem", fontWeight: 700, padding: "3px 8px", borderRadius: "4px",
+          background: "rgba(255,255,255,0.05)", color: "#64748b", border: "1px solid rgba(255,255,255,0.08)",
+        }}>
+          AUDITORÍA ACTIVA #{id.slice(-4).toUpperCase()}
+        </span>
+        {highCount > 0 && (
+          <span style={{
+            fontSize: "0.65rem", fontWeight: 700, padding: "3px 8px", borderRadius: "4px",
+            background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)",
+          }}>
+            ● Riesgo General: ALTO
+          </span>
+        )}
+      </div>
+
+      {/* Title + actions */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", marginBottom: "8px" }}>
+        <div>
+          <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#e2e8f0" }}>
+            {contract?.filename?.replace(/\.[^.]+$/, "") ?? "Contrato"}
+          </h1>
+          <p style={{ fontSize: "0.72rem", color: "#64748b", marginTop: "4px" }}>
+            Analizado con IA (gpt-4o-mini) · {analysis?.clauses?.length ?? 0} cláusulas analizadas
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+          <button className="btn-sm" onClick={() => window.print()} disabled={!analysis}
+            title="Imprimir o guardar el dictamen como PDF">📤 Exportar Dictamen</button>
+          <Link href={`/dashboard/contracts/${id}/chat`} className="btn-teal-sm">
+            💬 Preguntar a la IA →
+          </Link>
+        </div>
+      </div>
+>>>>>>> 0ce61968b85cf9eb3a6b73c82235f46ce73236f6
 
       {analysis && (
         <>
@@ -139,12 +185,84 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
             <div style={{ fontSize: "0.8rem", fontWeight: 600, color: "#e2e8f0", marginBottom: "10px" }}>
               📋 Ficha Resumen del Instrumento
             </div>
+<<<<<<< HEAD
             <p style={{ fontSize: "0.78rem", color: "#94a3b8", lineHeight: 1.6, marginBottom: "16px" }}>{analysis.summary}</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "16px" }}>
               <div>
                 <div style={labelStyle}>Partes involucradas</div>
                 <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "#e2e8f0", lineHeight: 1.4 }}>
                   {analysis.parties.join(" · ") || "—"}
+=======
+          ))}
+        </div>
+      </div>
+
+      {/* Riesgos */}
+      <div style={{ marginBottom: "20px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+          <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#e2e8f0" }}>
+            Riesgos detectados en el contrato
+          </h2>
+          <div style={{ display: "flex", gap: "8px", fontSize: "0.7rem" }}>
+            {highCount > 0 && <span style={{ color: "#ef4444" }}>● {highCount} Crítico</span>}
+            {mediumCount > 0 && <span style={{ color: "#f59e0b" }}>● {mediumCount} Media</span>}
+            {lowCount > 0 && <span style={{ color: "#22c55e" }}>● {lowCount} Neutra</span>}
+          </div>
+        </div>
+        <p style={{ fontSize: "0.72rem", color: "#64748b", marginBottom: "16px" }}>
+          Cláusulas clasificadas por nivel de riesgo identificado por el modelo de IA.
+        </p>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          {risks.length > 0 ? risks.map((risk, i) => {
+            const rc = RISK_COLORS[risk.severity];
+            return (
+              <div key={i} style={{
+                background: "#111827", border: `1px solid rgba(255,255,255,0.07)`,
+                borderRadius: "12px", overflow: "hidden",
+              }}>
+                {/* Header */}
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "12px 16px",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                }}>
+                  <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#e2e8f0" }}>
+                    {risk.clause}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "0.65rem", color: "#64748b" }}>Pág. {(i + 1) * 3} · Párr. {i + 1}</span>
+                    <span style={{
+                      fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: "4px",
+                      background: rc.bg, border: `1px solid ${rc.border}`, color: rc.text,
+                    }}>● {rc.label}</span>
+                  </div>
+                </div>
+                {/* Body */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0" }}>
+                  <div style={{ padding: "14px 16px", borderRight: "1px solid rgba(255,255,255,0.05)" }}>
+                    <div style={{ fontSize: "0.6rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>
+                      DICTAMEN DEL MODELO
+                    </div>
+                    <p style={{ fontSize: "0.75rem", color: "#94a3b8", lineHeight: 1.6 }}>{risk.description}</p>
+                  </div>
+                  <div style={{ padding: "14px 16px" }}>
+                    <div style={{ fontSize: "0.6rem", fontWeight: 700, color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>
+                      📍 RECOMENDACIÓN RÁPIDA
+                    </div>
+                    <p style={{ fontSize: "0.75rem", color: "#94a3b8", lineHeight: 1.6, marginBottom: "10px" }}>
+                      {risk.severity === "high"
+                        ? "Negociar tope del 10% y plan de gracia de 10 días."
+                        : risk.severity === "medium"
+                        ? "Reducir ventana de preaviso a 30 días."
+                        : "Sin observaciones obligatorias."}
+                    </p>
+                    <Link href={`/dashboard/contracts/${id}/chat`}
+                      style={{ fontSize: "0.7rem", color: "#2dd4bf", textDecoration: "none" }}>
+                      Redactar contrapropuesta con IA →
+                    </Link>
+                  </div>
+>>>>>>> 0ce61968b85cf9eb3a6b73c82235f46ce73236f6
                 </div>
               </div>
               <div>
@@ -154,6 +272,7 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
                     <span style={{ fontWeight: 600 }}>{d.date}</span>
                     {d.description && <span style={{ color: "#64748b" }}> — {d.description}</span>}
                   </div>
+<<<<<<< HEAD
                 )) : <div style={{ fontSize: "0.78rem", color: "#e2e8f0" }}>—</div>}
               </div>
               <div>
@@ -229,6 +348,51 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
           </div>
         </>
       )}
+=======
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+                    <div style={{ padding: "14px 16px", borderRight: "1px solid rgba(255,255,255,0.05)" }}>
+                      <div style={{ fontSize: "0.6rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>DICTAMEN DEL MODELO</div>
+                      <p style={{ fontSize: "0.75rem", color: "#94a3b8", lineHeight: 1.6 }}>{risk.description}</p>
+                    </div>
+                    <div style={{ padding: "14px 16px" }}>
+                      <div style={{ fontSize: "0.6rem", fontWeight: 700, color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>📍 RECOMENDACIÓN RÁPIDA</div>
+                      <p style={{ fontSize: "0.75rem", color: "#94a3b8", lineHeight: 1.6, marginBottom: "10px" }}>
+                        {risk.severity === "high" ? "Negociar tope del 10% y plan de gracia de 10 días." : risk.severity === "medium" ? "Reducir ventana de preaviso a 30 días. Ajustar término de preaviso →" : "Sin observaciones. Alineada a los estándares habituales de la industria corporativa."}
+                      </p>
+                      <Link href={`/dashboard/contracts/${id}/chat`} style={{ fontSize: "0.7rem", color: "#2dd4bf", textDecoration: "none" }}>
+                        Redactar contrapropuesta con IA →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* CTA Chat */}
+      <div style={{
+        background: "#111827", border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: "12px", padding: "18px 24px",
+        display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px",
+      }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
+          <span style={{ fontSize: "18px", marginTop: "2px" }}>💬</span>
+          <div>
+            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#e2e8f0", marginBottom: "3px" }}>
+              ¿Querés consultar detalles específicos o formular contrapropuestas?
+            </div>
+            <div style={{ fontSize: "0.72rem", color: "#64748b" }}>
+              El asistente tiene cargado todo el articulado y jurisprudencia comparada para redactar cláusulas de reemplazo.
+            </div>
+          </div>
+        </div>
+        <Link href={`/dashboard/contracts/${id}/chat`} className="btn-teal-sm" style={{ whiteSpace: "nowrap" }}>
+          Ir al Chat con IA →
+        </Link>
+      </div>
+>>>>>>> 0ce61968b85cf9eb3a6b73c82235f46ce73236f6
     </div>
   );
 }

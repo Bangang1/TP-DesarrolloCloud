@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { getContracts, deleteContract } from "@/lib/api";
 
 type Contract = {
@@ -38,15 +38,18 @@ export default function ContractsPage() {
   const [search, setSearch]     = useState("");
   const [filter, setFilter]     = useState<Filter>("all");
 
-  const load = useCallback(async () => {
-    try {
-      const data = await getContracts();
-      setContracts(data);
-    } catch { /* no-op */ }
-    finally { setLoading(false); }
-  }, []);
+  useEffect(() => {
+    let cancelado = false;
+    const load = () =>
+      getContracts()
+        .then((data) => { if (!cancelado) setContracts(data); })
+        .catch(() => { /* no-op */ })
+        .finally(() => { if (!cancelado) setLoading(false); });
 
-  useEffect(() => { load(); const iv = setInterval(load, 10_000); return () => clearInterval(iv); }, [load]);
+    load();
+    const iv = setInterval(load, 10_000);
+    return () => { cancelado = true; clearInterval(iv); };
+  }, []);
 
   const handleDelete = async (id: string) => {
     if (!confirm("¿Eliminar este contrato?")) return;

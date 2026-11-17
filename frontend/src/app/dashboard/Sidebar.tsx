@@ -3,10 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+<<<<<<< HEAD
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+=======
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+>>>>>>> 0ce61968b85cf9eb3a6b73c82235f46ce73236f6
 import SignOutModal from "./SignOutModal";
+import type { User } from "@supabase/supabase-js";
 
 const navItems = [
   { href: "/dashboard",           label: "Inicio",         icon: "⊞" },
@@ -18,15 +24,32 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+<<<<<<< HEAD
   const [user, setUser] = useState<User | null>(null);
+=======
+>>>>>>> 0ce61968b85cf9eb3a6b73c82235f46ce73236f6
   const [showSignOut, setShowSignOut] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
+<<<<<<< HEAD
     const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
     return () => data.subscription.unsubscribe();
   }, []);
 
   const displayName = user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email || "Usuario";
+=======
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+    });
+  }, []);
+
+  const displayName = user?.user_metadata?.full_name
+    || user?.user_metadata?.name
+    || user?.email?.split("@")[0]
+    || "Usuario";
+>>>>>>> 0ce61968b85cf9eb3a6b73c82235f46ce73236f6
 
   const isActive = (href: string) =>
     href === "/dashboard" ? pathname === href : pathname.startsWith(href);
@@ -65,7 +88,7 @@ export default function Sidebar() {
           <div className="user-info">
             <span className="user-avatar" />
             <div>
-              <div className="user-name">{displayName.split(" ")[0]} {displayName.split(" ")[1]?.[0]}.</div>
+              <div className="user-name">{displayName.split(" ")[0]} {displayName.split(" ")[1]?.[0] ? `${displayName.split(" ")[1][0]}.` : ""}</div>
               <div className="user-role">Alumno / Dev</div>
             </div>
           </div>

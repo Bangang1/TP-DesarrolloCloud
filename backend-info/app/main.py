@@ -2,8 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
+from app.core.config import settings
 from app.core.database import connect_db
-from app.routes import contracts, chat, webhooks
+from app.routes import contratos, chat, webhooks
 
 
 @asynccontextmanager
@@ -20,17 +21,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS para el frontend de Next.js
+# CORS para el frontend de Next.js (dominios en CORS_ORIGINS)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://tu-dominio.vercel.app"],
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Rutas
-app.include_router(contracts.router)
+app.include_router(contratos.router)
 app.include_router(chat.router)
 app.include_router(webhooks.router)
 

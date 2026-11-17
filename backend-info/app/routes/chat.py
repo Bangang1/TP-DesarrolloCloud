@@ -1,60 +1,77 @@
 import anthropic
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+<<<<<<< HEAD
 from app.core.auth import get_current_user
 from app.core.config import settings
 from app.models.contract import Contract, ContractStatus
+=======
+from app.core.auth import verify_supabase_token
+from app.models.contrato import Contrato
+>>>>>>> 0ce61968b85cf9eb3a6b73c82235f46ce73236f6
 from app.models.chat_session import ChatSession
 from app.models.analysis import Analysis
 from app.services.llm import answer_contract_question
 from beanie import PydanticObjectId
-from datetime import datetime
+from datetime import datetime, timezone
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
+
+
+def _parsear_id(contrato_id: str) -> PydanticObjectId:
+    try:
+        return PydanticObjectId(contrato_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Contrato no encontrado")
 
 
 class ChatRequest(BaseModel):
     question: str
 
 
-@router.post("/{contract_id}")
+@router.post("/{contrato_id}")
 async def chat_with_contract(
-    contract_id: str,
+    contrato_id: str,
     body: ChatRequest,
+<<<<<<< HEAD
     user: dict = Depends(get_current_user),
+=======
+    user: dict = Depends(verify_supabase_token),
+>>>>>>> 0ce61968b85cf9eb3a6b73c82235f46ce73236f6
 ):
     """
     Recibe una pregunta del usuario sobre un contrato y retorna la respuesta del LLM.
-    El contrato debe estar en estado 'completed' (analisis terminado).
+    El contrato debe estar en estado 'completado' (analisis terminado).
     """
     user_id = user["sub"]
 
     # Verificar que el contrato existe y pertenece al usuario
-    contract = await Contract.get(contract_id)
-    if not contract or contract.user_id != user_id:
+    contrato = await Contrato.get(_parsear_id(contrato_id))
+    if not contrato or contrato.usuario_id != user_id:
         raise HTTPException(status_code=404, detail="Contrato no encontrado")
 
-    if contract.status != ContractStatus.COMPLETED:
+    if contrato.estado != "completado":
         raise HTTPException(
             status_code=409,
-            detail=f"El contrato aun se esta procesando (estado: {contract.status})"
+            detail=f"El contrato aún se está procesando (estado: {contrato.estado})"
         )
 
     # Buscar o crear sesion de chat para este contrato
     session = await ChatSession.find_one(
-        ChatSession.contract_id == PydanticObjectId(contract_id),
+        ChatSession.contract_id == _parsear_id(contrato_id),
         ChatSession.user_id == user_id,
     )
 
     if not session:
         session = ChatSession(
-            contract_id=PydanticObjectId(contract_id),
+            contract_id=contrato.id,
             user_id=user_id,
             messages=[],
         )
         await session.insert()
 
     # Obtener respuesta del LLM usando el analisis como contexto
+<<<<<<< HEAD
     if not settings.anthropic_api_key:
         raise HTTPException(status_code=503, detail="El chat no esta configurado: falta la clave de Claude (ANTHROPIC_API_KEY)")
 
@@ -70,23 +87,35 @@ async def chat_with_contract(
         raise HTTPException(status_code=503, detail="Claude esta recibiendo demasiados pedidos. Proba de nuevo en un momento.")
     except anthropic.APIError:
         raise HTTPException(status_code=502, detail="No se pudo obtener una respuesta de Claude")
+=======
+    answer = await answer_contract_question(
+        contract_id=contrato_id,
+        question=body.question,
+        chat_history=session.messages,
+    )
+>>>>>>> 0ce61968b85cf9eb3a6b73c82235f46ce73236f6
 
     # Guardar el intercambio en el historial
-    session.messages.append({"role": "user", "content": body.question, "timestamp": datetime.utcnow().isoformat()})
-    session.messages.append({"role": "assistant", "content": answer, "timestamp": datetime.utcnow().isoformat()})
-    session.updated_at = datetime.utcnow()
+    session.messages.append({"role": "user", "content": body.question, "timestamp": datetime.now(timezone.utc).isoformat()})
+    session.messages.append({"role": "assistant", "content": answer, "timestamp": datetime.now(timezone.utc).isoformat()})
+    session.updated_at = datetime.now(timezone.utc)
     await session.save()
 
     return {"answer": answer, "session_id": str(session.id)}
 
 
+<<<<<<< HEAD
 @router.get("/{contract_id}/history")
 async def get_chat_history(contract_id: str, user: dict = Depends(get_current_user)):
+=======
+@router.get("/{contrato_id}/history")
+async def get_chat_history(contrato_id: str, user: dict = Depends(verify_supabase_token)):
+>>>>>>> 0ce61968b85cf9eb3a6b73c82235f46ce73236f6
     """Retorna el historial completo de chat para un contrato."""
     user_id = user["sub"]
 
     session = await ChatSession.find_one(
-        ChatSession.contract_id == PydanticObjectId(contract_id),
+        ChatSession.contract_id == _parsear_id(contrato_id),
         ChatSession.user_id == user_id,
     )
 

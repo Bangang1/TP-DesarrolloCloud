@@ -9,10 +9,16 @@
     "lint": "eslint"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
+=======
+    "@azure/storage-blob": "^12.34.0",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.2",
+>>>>>>> 0ce61968b85cf9eb3a6b73c82235f46ce73236f6
     "enhanced-resolve": "^5.25.1",
-    "next": "16.3.6",
+    "next": "16.4.3",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
@@ -22,7 +28,7 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.3.6",
+    "eslint-config-next": "16.4.3",
     "tailwindcss": "^4",
     "typescript": "5.9.3"
   }

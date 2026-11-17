@@ -1127,7 +1127,11 @@ export default function LandingPage() {
               <div className="text-2xl sm:text-3xl mb-2.5">⚡</div>
               <h3 className="text-base font-bold text-white mb-1.5">Frontend Next.js 16</h3>
               <p className="text-xs text-gray-400 leading-relaxed mb-4">
+<<<<<<< HEAD
                 Renderizado híbrido con App Router. Autenticación de usuarios con Supabase Auth y consumo de endpoints protegidos por JWT.
+=======
+                Renderizado híbrido con App Router. Integración de autenticación de usuarios con Supabase Auth y consumo de endpoints protegidos por JWT.
+>>>>>>> 0ce61968b85cf9eb3a6b73c82235f46ce73236f6
               </p>
             </div>
             <div className="flex gap-1.5 flex-wrap pt-3 border-t border-white/5">
@@ -1291,7 +1295,11 @@ export default function LandingPage() {
             },
             {
               q: "¿Cómo se garantiza la seguridad y privacidad de los documentos?",
+<<<<<<< HEAD
               a: "Cada contrato se almacena en un bucket de Amazon S3 con cifrado del lado del servidor (SSE-S3). Los identificadores son anónimos, la autenticación está administrada por Supabase y los microservicios solo acceden a los documentos mediante tokens seguros de corta duración.",
+=======
+              a: "Cada contrato se almacena en un bucket de Amazon S3 con cifrado del lado del servidor (SSE-S3). Los identificadores son anónimos, la autenticación está administrada por Supabase Auth y los microservicios solo acceden a los documentos mediante tokens seguros de corta duración.",
+>>>>>>> 0ce61968b85cf9eb3a6b73c82235f46ce73236f6
             },
             {
               q: "¿El Chat Jurídico inventa respuestas (alucinaciones)?",
